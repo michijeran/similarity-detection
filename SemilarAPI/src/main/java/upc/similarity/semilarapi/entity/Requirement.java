@@ -26,10 +26,20 @@ public class Requirement implements Serializable {
     @JsonProperty(value="created_at")
     private Long created_at;
 
+    private Cluster cluster;
+    private int clusterId;
+    private boolean master;
+
     private Sentence sentence_name;
     private Sentence sentence_text;
 
     public Requirement() {}
+
+    public Requirement(String id, int clusterid, boolean master) {
+        this.id = id;
+        this.clusterId = clusterid;
+        this.master = master;
+    }
 
     public Requirement(String id, int name, int text, Sentence sentence_name, Sentence sentence_text, long created_at) {
         this.id = id;
@@ -206,6 +216,34 @@ public class Requirement implements Serializable {
 
     public String getText() {
         return text;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public Cluster getCluster() {
+        return cluster;
+    }
+
+    public int getClusterId() {
+        return clusterId;
+    }
+
+    public void setClusterid(Cluster clusterid) {
+        this.cluster = clusterid;
+    }
+
+    public void setSentence_name(Sentence sentence_name) {
+        this.sentence_name = sentence_name;
+    }
+
+    public void setSentence_text(Sentence sentence_text) {
+        this.sentence_text = sentence_text;
+    }
+
+    public void setMaster(boolean master) {
+        this.master = master;
     }
 
     public Long getCreated_at() {

@@ -87,6 +87,7 @@ public class Dependency implements Serializable {
         json.put("fromid",fromid);
         json.put("toid",toid);
         json.put("dependency_type",dependency_type);
+        json.put("status",status);
         /*JSONArray json_description = new JSONArray();
         for (String aux: description) {
             json_description.put(aux);

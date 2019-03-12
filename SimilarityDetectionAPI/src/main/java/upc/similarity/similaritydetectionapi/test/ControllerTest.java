@@ -32,7 +32,7 @@ public class ControllerTest {
         }
     }
 
-    private static class Second_Result {
+    protected static class Second_Result {
         String result_info;
         String result;
         Second_Result(String result_info, String result) {
@@ -42,8 +42,8 @@ public class ControllerTest {
     }
 
     private String path = "../testing/integration/semilar/";
-    private static boolean finished = false;
-    private static Second_Result second_result = new Second_Result(null,null);
+    protected static boolean finished = false;
+    protected static Second_Result second_result = new Second_Result(null,null);
     @LocalServerPort
     private int port;
 
@@ -51,7 +51,7 @@ public class ControllerTest {
     Simple endpoints
      */
 
-    @Test
+    /*@Test
     public void TestAddReqs() throws InterruptedException {
         First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/DB/AddReqs?url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"addreqs.json"));
         assertEquals(200,first_result.httpStatus);
@@ -105,7 +105,7 @@ public class ControllerTest {
     More complex endpoints
      */
 
-    @Test
+   /* @Test
     public void TestProjReq_multiple() throws InterruptedException {
         First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ReqProject?compare=true&req=QM-1&req=QM-2&project=QM&threshold=0&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"input_projreq_multiple.json"));
         assertEquals(200,first_result.httpStatus);
@@ -135,51 +135,11 @@ public class ControllerTest {
         finished = false;
     }
 
-    @Test
-    public void TestCluster_not_duplicates() throws InterruptedException {
-        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/Clusters?compare=true&project=QM&threshold=0.6&type=all&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"input_clusters_notDup.json"));
-        assertEquals(200,first_result.httpStatus);
-        while(!finished) {Thread.sleep(2000);}
-        assertEquals(read_file(path+"output_clusters_notDup.json"),second_result.result);
-        assertEquals(create_json_info(first_result.id,"Clusters","true"),second_result.result_info);
-        finished = false;
-    }
-
-    @Test
-    public void TestCluster_change_older() throws InterruptedException {
-        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/Clusters?compare=true&project=QM&threshold=0.3&type=all&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"input_clusters_change_older.json"));
-        assertEquals(200,first_result.httpStatus);
-        while(!finished) {Thread.sleep(2000);}
-        assertEquals(read_file(path+"output_clusters_change_older.json"),second_result.result);
-        assertEquals(create_json_info(first_result.id,"Clusters","true"),second_result.result_info);
-        finished = false;
-    }
-
-    @Test
-    public void TestCluster_big_all() throws InterruptedException {
-        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/Clusters?compare=true&project=QM&threshold=0.4&type=all&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"input_clusters_big_all.json"));
-        assertEquals(200,first_result.httpStatus);
-        while(!finished) {Thread.sleep(2000);}
-        assertEquals(read_file(path+"output_clusters_big_all.json"),second_result.result);
-        assertEquals(create_json_info(first_result.id,"Clusters","true"),second_result.result_info);
-        finished = false;
-    }
-
-    @Test
-    public void TestCluster_big_one() throws InterruptedException {
-        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/Clusters?compare=true&project=QM&threshold=0.3&type=one&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"input_clusters_big_one.json"));
-        assertEquals(200,first_result.httpStatus);
-        while(!finished) {Thread.sleep(2000);}
-        assertEquals(read_file(path+"output_clusters_big_one.json"),second_result.result);
-        assertEquals(create_json_info(first_result.id,"Clusters","true"),second_result.result_info);
-        finished = false;
-    }
-
     /*
     Exceptions
      */
 
-    @Test
+    /*@Test
     public void TestReqReq_otherEdep() throws InterruptedException {
         First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ReqReq?compare=true&req1=QM-1&req2=QM-2&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"input_reqreq_depE.json"));
         assertEquals(200,first_result.httpStatus);
@@ -196,7 +156,7 @@ public class ControllerTest {
         assertEquals(read_file(path+"output_addreqs.json"),second_result.result);
         assertEquals(create_json_info(first_result.id,"AddReqs","true"),second_result.result_info);
         finished = false;
-    }
+    }*/
 
 
 
@@ -272,5 +232,4 @@ public class ControllerTest {
         result.put("operation",operation);
         return result.toString();
     }
-
 }

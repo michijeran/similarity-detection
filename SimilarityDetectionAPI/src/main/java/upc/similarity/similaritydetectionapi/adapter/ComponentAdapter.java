@@ -26,21 +26,26 @@ public abstract class ComponentAdapter {
 
 
     //main operations
-    public abstract void similarity(String compare, Requirement req1, Requirement req2, String filename, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+    public abstract void similarity(String stakeholderId, String compare, Requirement req1, Requirement req2, String filename, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
-    public abstract void similarityReqProject(String compare, float treshold, String filename, List<Requirement> requirements, List<Requirement> project_requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+    public abstract void similarityReqProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Requirement> project_requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
-    public abstract void similarityProject(String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+    public abstract void similarityProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
     public abstract void similarityCluster(String type, String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
+    public abstract void iniClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+
+    public abstract void updateClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+
+    public abstract void modifyThreshold(String stakeholderId, float threshold) throws ComponentException, BadRequestException;
 
     //auxiliary operations
     protected void connection_component(String URL, JSONObject json) throws ComponentException, BadRequestException {
 
         HttpClient httpclient = HttpClients.createDefault();
         HttpPost httppost = new HttpPost(URL);
-        httppost.setEntity(new StringEntity(json.toString(), ContentType.APPLICATION_JSON));
+        if (json != null) httppost.setEntity(new StringEntity(json.toString(), ContentType.APPLICATION_JSON));
 
         int httpStatus = 200;
         String json_response = "";

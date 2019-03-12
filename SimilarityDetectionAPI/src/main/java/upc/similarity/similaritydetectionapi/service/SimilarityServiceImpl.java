@@ -19,11 +19,8 @@ import upc.similarity.similaritydetectionapi.adapter.ComponentAdapter;
 import upc.similarity.similaritydetectionapi.adapter.SemilarAdapter;
 import upc.similarity.similaritydetectionapi.entity.Dependency;
 import upc.similarity.similaritydetectionapi.entity.Project;
-import upc.similarity.similaritydetectionapi.entity.input_output.Result_id;
-import upc.similarity.similaritydetectionapi.entity.input_output.JsonProject;
-import upc.similarity.similaritydetectionapi.entity.input_output.JsonReqReq;
+import upc.similarity.similaritydetectionapi.entity.input_output.*;
 import upc.similarity.similaritydetectionapi.entity.Requirement;
-import upc.similarity.similaritydetectionapi.entity.input_output.Requirements;
 import upc.similarity.similaritydetectionapi.exception.*;
 import upc.similarity.similaritydetectionapi.values.Component;
 
@@ -42,7 +39,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     //Main operations
 
     @Override
-    public Result_id simReqReq(String req1, String req2, String compare, String url, JsonReqReq input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id simReqReq(String stakeholderId, String req1, String req2, String compare, String url, JsonReqReq input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -74,7 +71,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 ObjectMapper mapper = new ObjectMapper();
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.similarity(compare, requirement1, requirement2,id.getId(),input.getDependencies());
+                    componentAdapter.similarity(stakeholderId,compare, requirement1, requirement2,id.getId(),input.getDependencies());
                     fis = new FileInputStream(file);
                     success = "true";
                 } catch (ComponentException e) {
@@ -102,7 +99,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id simReqProj(List<String> req, String project, String compare, float threshold, String url, JsonProject input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id simReqProj(String stakeholderId, List<String> req, String project, String compare, float threshold, String url, JsonProject input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -128,7 +125,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.similarityReqProject(compare,threshold,id.getId(),requirements_to_compare,project_requirements,input.getDependencies());
+                    componentAdapter.similarityReqProject(stakeholderId,compare,threshold,id.getId(),requirements_to_compare,project_requirements,input.getDependencies());
                     fis = new FileInputStream(file);
                     success = "true";
                 } catch (ComponentException e) {
@@ -156,7 +153,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id simProj(String project, String compare, float threshold, String url, JsonProject input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id simProj(String stakeholderId,String project, String compare, float threshold, String url, JsonProject input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -180,7 +177,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.similarityProject(compare,threshold,id.getId(),project_requirements,input.getDependencies());
+                    componentAdapter.similarityProject(stakeholderId,compare,threshold,id.getId(),project_requirements,input.getDependencies());
 
                     fis = new FileInputStream(file);
                     success = "true";
@@ -209,7 +206,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id addRequirements(Requirements input, String url) throws ComponentException, BadRequestException {
+    public Result_id addRequirements(String stakeholderId, Requirements input, String url) throws ComponentException, BadRequestException {
 
         Result_id id = get_id();
 
@@ -223,7 +220,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     SemilarAdapter semilarAdapter = new SemilarAdapter();
-                    semilarAdapter.processRequirements(input.getRequirements());
+                    semilarAdapter.processRequirements(stakeholderId,input.getRequirements());
                     System.out.println("finish preprocess");
                     String result = "{\"result\":\"Success!\"}";
                     fis = new ByteArrayInputStream(result.getBytes());
@@ -303,11 +300,169 @@ public class SimilarityServiceImpl implements SimilarityService {
         return id;
     }
 
+    @Override
+    public Result_id iniClusters(String stakeholderId, String compare, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException {
 
+        String component = "Semilar";
+        Result_id id = get_id();
 
+        if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
+        if (!input.OK()) throw new BadRequestException("The provided json has not requirements or has not dependencies");
+
+        //search requirements in dependencies
+        //List<Requirement> dependencies_requirements = search_dependencies_requirements(input.getDependencies(),input.getRequirements());
+
+        //Create file to save result
+        File file = create_file(path+id.getId());
+
+        //New thread
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InputStream fis = null;
+                String success = "false";
+                try {
+                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
+                    componentAdapter.iniClusters(compare,id.getId(),stakeholderId,input.getRequirements(),input.getDependencies());
+                    String result = "{\"result\":\"Success!\"}";
+                    fis = new ByteArrayInputStream(result.getBytes());
+                    success = "true";
+                } catch (ComponentException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
+                } catch (BadRequestException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
+                } catch (NotFoundException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(410,"Not found",e.getMessage()).getBytes());
+                }
+                finally {
+                    update_client(fis,url,id.getId(),success,"iniClusters");
+                    try {
+                        delete_file(file);
+                    } catch (InternalErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        });
+
+        thread.start();
+        return id;
+    }
+
+    @Override
+    public Result_id updateClusters(String stakeholderId, String compare, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException {
+
+        String component = "Semilar";
+        Result_id id = get_id();
+
+        if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
+        if (!input.OK()) throw new BadRequestException("The provided json has not requirements or has not dependencies");
+
+        //search requirements in dependencies
+        //List<Requirement> dependencies_requirements = search_dependencies_requirements(input.getDependencies(),input.getRequirements());
+
+        //Create file to save result
+        File file = create_file(path+id.getId());
+
+        //New thread
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InputStream fis = null;
+                String success = "false";
+                try {
+                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
+                    componentAdapter.updateClusters(compare,id.getId(),stakeholderId,input.getRequirements(),input.getDependencies());
+                    String result = "{\"result\":\"Success!\"}";
+                    fis = new ByteArrayInputStream(result.getBytes());
+                    success = "true";
+                } catch (ComponentException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
+                } catch (BadRequestException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
+                } catch (NotFoundException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(410,"Not found",e.getMessage()).getBytes());
+                }
+                finally {
+                    update_client(fis,url,id.getId(),success,"updateClusters");
+                    try {
+                        delete_file(file);
+                    } catch (InternalErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        });
+
+        thread.start();
+        return id;
+    }
+
+    @Override
+    public Result_id modifyThreshold(String stakeholderId, float threshold, String url) throws InternalErrorException {
+
+        String component = "Semilar";
+        Result_id id = get_id();
+
+        //Create file to save result
+        File file = create_file(path+id.getId());
+
+        //New thread
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InputStream fis = null;
+                String success = "false";
+                try {
+                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
+                    componentAdapter.modifyThreshold(stakeholderId,threshold);
+                    String result = "{\"result\":\"Success!\"}";
+                    fis = new ByteArrayInputStream(result.getBytes());
+                    success = "true";
+                } catch (ComponentException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
+                } catch (BadRequestException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
+                }
+                finally {
+                    update_client(fis,url,id.getId(),success,"modifyTheshold");
+                    try {
+                        delete_file(file);
+                    } catch (InternalErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        });
+
+        thread.start();
+        return id;
+    }
 
 
     //Auxiliary operations
+
+    /*private List<Requirement> search_dependencies_requirements(List<Dependency> dependencies, List<Requirement> requirements) {
+
+        List<Requirement> result = new ArrayList<>();
+
+        HashSet<String> ids = new HashSet<>();
+        for (Dependency dependency: dependencies) {
+            if (dependency.getStatus().equals("accepted") && dependency.getDependency_type().equals("duplicates")) {
+                ids.add(dependency.getFromid());
+                ids.add(dependency.getToid());
+            } else dependencies.remove(dependency);
+        }
+
+        for (Requirement requirement: requirements) {
+            if (ids.contains(requirement.getId())) {
+                ids.remove(requirement.getId());
+                result.add(requirement);
+            }
+        }
+
+        return result;
+    }*/
 
     private Result_id get_id() {
         Random rand = new Random();

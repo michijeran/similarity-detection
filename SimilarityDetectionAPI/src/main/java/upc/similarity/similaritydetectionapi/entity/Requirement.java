@@ -57,11 +57,6 @@ public class Requirement implements Serializable {
         json.put("name",name);
         json.put("text",text);
         json.put("created_at",created_at);
-        /*JSONArray json_comments = new JSONArray();
-        for (Comment comment: comments) {
-            json_comments.put(comment.toJSON());
-        }
-        json.put("comments",json_comments);*/
         return json;
     }
 }

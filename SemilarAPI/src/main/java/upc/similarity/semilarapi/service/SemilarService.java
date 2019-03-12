@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.json.JSONObject;
+import upc.similarity.semilarapi.entity.input.IniClusterOp;
 import upc.similarity.semilarapi.entity.input.PairReq;
 import upc.similarity.semilarapi.entity.input.ProjOp;
 import upc.similarity.semilarapi.entity.input.ReqProjOp;
@@ -15,21 +16,28 @@ import upc.similarity.semilarapi.exception.InternalErrorException;
 public interface SemilarService {
 
     //Similarity
-    public void similarity(String compare, String filename, PairReq input) throws SQLException, BadRequestException, InternalErrorException;
+    public void similarity(String stakeholderId, String compare, String filename, PairReq input) throws SQLException, BadRequestException, InternalErrorException;
 
-    public JSONObject testing(String compare, String filename, PairReq input) throws SQLException, BadRequestException, InternalErrorException;
+    public void similarityReqProj(String stakeholderId, String compare, float threshold, String filename, ReqProjOp input) throws InternalErrorException;
 
-    public void similarityReqProj(String compare, float threshold, String filename, ReqProjOp input) throws InternalErrorException;
+    public void similarityProj(String stakeholderId, String compare, float threshold, String filename, ProjOp input) throws InternalErrorException;
 
-    public void similarityProj(String compare, float threshold, String filename, ProjOp input) throws InternalErrorException;
+    public void similarityProj_Large(String stakeholderId, String compare, float threshold, String filename, ProjOp input) throws InternalErrorException;
 
-    public void similarityProj_Large(String compare, float threshold, String filename, ProjOp input) throws InternalErrorException;
+    public void iniClusters(String compare, String stakeholderId, String filename, IniClusterOp input) throws InternalErrorException, BadRequestException;
 
-    public void similarityCluster(String compare, float threshold, String filename, String type, ProjOp input) throws InternalErrorException, BadRequestException;
+    public void updateClusters(String compare, String stakeholderId, String filename, IniClusterOp input) throws InternalErrorException, BadRequestException;
+
+    public void modifyThreshold(String stakeholderId, float threshold) throws InternalErrorException;
 
 
     //Database
-    public void savePreprocessed(List<Requirement> reqs) throws SQLException;
+    public void savePreprocessed(String stakeholderId, List<Requirement> reqs) throws InternalErrorException;
 
-    public void clearDB() throws SQLException;
+    public void clearDB() throws InternalErrorException;
+
+    //Test
+    public String getDependencies(String stakeholderid) throws InternalErrorException;
+    public String getRequirements(String stakeholderid) throws InternalErrorException;
+    public String getStakeholders() throws InternalErrorException;
 }

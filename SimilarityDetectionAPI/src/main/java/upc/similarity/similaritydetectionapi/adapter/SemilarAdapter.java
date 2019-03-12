@@ -24,7 +24,7 @@ public class SemilarAdapter extends ComponentAdapter{
     private static final String URL = "http://localhost:9405/upc/Semilar/";
 
     @Override
-    public void similarity(String compare, Requirement req_entity1, Requirement req_entity2, String filename, List<Dependency> dependencies) throws ComponentException, BadRequestException {
+    public void similarity(String stakeholderId, String compare, Requirement req_entity1, Requirement req_entity2, String filename, List<Dependency> dependencies) throws ComponentException, BadRequestException {
 
         JSONObject req_json1 = req_entity1.toJSON();
         JSONObject req_json2 = req_entity2.toJSON();
@@ -35,11 +35,11 @@ public class SemilarAdapter extends ComponentAdapter{
         json_to_send.put("req2",req_json2);
         json_to_send.put("dependencies",deps_json);
 
-        connection_component(URL + "PairSim?compare=" + compare + "&filename=" + filename, json_to_send);
+        connection_component(URL + "PairSim?compare=" + compare + "&filename=" + filename + "&stakeholderid=" +stakeholderId, json_to_send);
     }
 
     @Override
-    public void similarityReqProject(String compare, float treshold, String filename, List<Requirement> requirements, List<Requirement> project_requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException {
+    public void similarityReqProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Requirement> project_requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException {
 
         JSONArray reqs_to_compare_json = list_requirements_to_JSON(requirements);
         JSONArray reqs_json = list_requirements_to_JSON(project_requirements);
@@ -50,11 +50,11 @@ public class SemilarAdapter extends ComponentAdapter{
         json_to_send.put("project_requirements",reqs_json);
         json_to_send.put("dependencies",deps_json);
 
-        connection_component(URL + "ReqProjSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename,json_to_send);
+        connection_component(URL + "ReqProjSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename + "&stakeholderid=" +stakeholderId,json_to_send);
     }
 
     @Override
-    public void similarityProject(String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException {
+    public void similarityProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException {
 
         JSONArray reqs_json = list_requirements_to_JSON(requirements);
         JSONArray deps_json = list_dependencies_to_JSON(dependencies);
@@ -63,7 +63,7 @@ public class SemilarAdapter extends ComponentAdapter{
         json_to_send.put("requirements",reqs_json);
         json_to_send.put("dependencies",deps_json);
 
-        connection_component(URL + "ProjSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename,json_to_send);
+        connection_component(URL + "ProjSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename + "&stakeholderid=" +stakeholderId,json_to_send);
     }
 
     @Override
@@ -79,7 +79,39 @@ public class SemilarAdapter extends ComponentAdapter{
         connection_component(URL + "ClusterSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename + "&type=" + type,json_to_send);
     }
 
-    public void processRequirements(List<Requirement> requirements) throws ComponentException, BadRequestException {
+    @Override
+    public void iniClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException {
+
+        JSONArray reqs_json = list_requirements_to_JSON(requirements);
+        JSONArray deps_json = list_dependencies_to_JSON(dependencies);
+
+        JSONObject json_to_send = new JSONObject();
+        json_to_send.put("requirements", reqs_json);
+        json_to_send.put("dependencies", deps_json);
+
+        connection_component(URL + "iniClusters?compare=" + compare + "&filename=" + filename + "&stakeholderId=" + stakeholderId,json_to_send);
+    }
+
+    @Override
+    public void updateClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException {
+
+        JSONArray reqs_json = list_requirements_to_JSON(requirements);
+        JSONArray deps_json = list_dependencies_to_JSON(dependencies);
+
+        JSONObject json_to_send = new JSONObject();
+        json_to_send.put("requirements", reqs_json);
+        json_to_send.put("dependencies", deps_json);
+
+        connection_component(URL + "updateClusters?compare=" + compare + "&filename=" + filename + "&stakeholderId=" + stakeholderId,json_to_send);
+    }
+
+    @Override
+    public void modifyThreshold(String stakeholderId, float threshold) throws ComponentException, BadRequestException {
+
+        connection_component(URL + "modifyThreshold?stakeholderId=" + stakeholderId + "&threshold=" + threshold,null);
+    }
+
+    public void processRequirements(String stakeholderId, List<Requirement> requirements) throws ComponentException, BadRequestException {
         //TODO move this part to abstract class
 
         JSONArray reqs_json = list_requirements_to_JSON(requirements);
@@ -88,7 +120,7 @@ public class SemilarAdapter extends ComponentAdapter{
         json_to_send.put("requirements",reqs_json);
 
         HttpClient httpclient = HttpClients.createDefault();
-        HttpPost httppost = new HttpPost(URL + "Preprocess");
+        HttpPost httppost = new HttpPost(URL + "Preprocess?" + "stakeholderid=" +stakeholderId);
         httppost.setEntity(new StringEntity(json_to_send.toString(), ContentType.APPLICATION_JSON));
 
         int httpStatus = 200;
@@ -139,8 +171,7 @@ public class SemilarAdapter extends ComponentAdapter{
             String message = result.getString("message");
             switch (status) {
                 case 412: throw new BadRequestException(message);
-                case 411: throw new SemilarException("Database error: " + message);
-                default: throw new SemilarException("Semilar component is not working");
+                default: throw new SemilarException("Semilar component is not working" + message);
             }
         }
     }

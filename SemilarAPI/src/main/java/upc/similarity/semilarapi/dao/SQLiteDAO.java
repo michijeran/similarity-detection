@@ -3,34 +3,49 @@ package upc.similarity.semilarapi.dao;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sqlite.SQLiteConfig;
 import semilar.data.DependencyStructure;
 import semilar.data.Sentence;
 import semilar.data.Word;
+import upc.similarity.semilarapi.entity.Cluster;
+import upc.similarity.semilarapi.entity.Dependency;
 import upc.similarity.semilarapi.entity.Requirement;
+import upc.similarity.semilarapi.entity.Stakeholder;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 
 public class SQLiteDAO implements RequirementDAO {
 
     private static Connection c;
 
-    private void createNewTable() {
-        // SQL statement for creating a new table
-        /*
-        id -> primary key
-        name -> values in range (0,1) 0-> name null 1-> name not null
-        text -> values in range (0,1) 0-> text null 1-> text not null
+    public static final String DB_URL = "jdbc:sqlite:../semilar.db";
+    public static final String DRIVER = "org.sqlite.JDBC";
 
+    public static Connection getConnection() throws ClassNotFoundException {
+        Class.forName(DRIVER);
+        Connection connection = null;
+        try {
+            SQLiteConfig config = new SQLiteConfig();
+            config.enforceForeignKeys(true);
+            connection = DriverManager.getConnection(DB_URL,config.toProperties());
+        } catch (SQLException ex) {}
+        return connection;
+    }
+
+    private void createDatabase() {
+
+
+        /*
+        Stakeholders table
          */
-        String sql = "CREATE TABLE IF NOT EXISTS prepocessed (\n"
-                + "	id varchar PRIMARY KEY,\n"
-                + " created_at long, \n"
-                + " name integer, \n"
-                + " text integer, \n"
-                + "	sentence_name text,\n"
-                + "	sentence_text text\n"
+
+        String sql = "CREATE TABLE IF NOT EXISTS stakeholders (\n"
+                + "	id varchar NOT NULL, \n"
+                + " threshold float NOT NULL, \n"
+                + " PRIMARY KEY(id)"
                 + ");";
 
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:../semilar.db");
@@ -38,25 +53,77 @@ public class SQLiteDAO implements RequirementDAO {
             // create a new table
             stmt.execute(sql);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+
+        /*
+        Prepocessed requirements
+        id -> primary key
+        name -> values in range (0,1) 0-> name null 1-> name not null
+        text -> values in range (0,1) 0-> text null 1-> text not null
+
+         */
+        sql = "CREATE TABLE IF NOT EXISTS prepocessed (\n"
+                + "	id varchar NOT NULL, \n"
+                + " created_at long, \n"
+                + " name integer, \n"
+                + " text integer, \n"
+                + "	sentence_name text, \n"
+                + "	sentence_text text, \n"
+                + " clusterid integer, \n"
+                + " master boolean, \n"
+                + " stakeholderid varchar NOT NULL, \n"
+                + " PRIMARY KEY(id, stakeholderid), \n"
+                + " FOREIGN KEY(stakeholderid) REFERENCES stakeholders(id)"
+                + ");";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:../semilar.db");
+             Statement stmt = conn.createStatement()) {
+            // create a new table
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        /*
+        Dependencies table
+         */
+
+        sql = "CREATE TABLE IF NOT EXISTS dependencies (\n"
+                + "	fromid varchar NOT NULL, \n"
+                + " toid varchar NOT NULL, \n"
+                + " accepted boolean NOT NULL, \n"
+                + " stakeholderid varchar NOT NULL, \n"
+                + " PRIMARY KEY(fromid, toid, stakeholderid), \n"
+                + " FOREIGN KEY(fromid, stakeholderid) REFERENCES prepocessed(id,stakeholderid), \n"
+                + " FOREIGN KEY(toid,stakeholderid) REFERENCES prepocessed(id,stakeholderid)"
+                + ");";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:../semilar.db");
+             Statement stmt = conn.createStatement()) {
+            // create a new table
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     public SQLiteDAO() throws ClassNotFoundException {
-        Class.forName("org.sqlite.JDBC");
+        c = getConnection();
     }
 
     @Override
-    public void savePreprocessed(Requirement r) throws SQLException {
-        c = DriverManager.getConnection("jdbc:sqlite:../semilar.db");
+    public void savePreprocessed(Requirement r, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
 
 
         PreparedStatement ps;
-        ps = c.prepareStatement("DELETE FROM prepocessed WHERE id = ?");
+        ps = c.prepareStatement("DELETE FROM prepocessed WHERE id = ? AND stakeholderid = ?");
         ps.setString(1, r.getId());
+        ps.setString(2, stakeholderid);
         ps.execute();
 
-        ps = c.prepareStatement ("INSERT INTO prepocessed (id, created_at, name, text, sentence_name, sentence_text) VALUES (?, ?, ?, ?, ?, ?)");
+        ps = c.prepareStatement ("INSERT INTO prepocessed (id, created_at, name, text, sentence_name, sentence_text, clusterid, master, stakeholderid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         ps.setString(1, r.getId());
         if (!(r.getCreated_at() == null)) ps.setLong(2,r.getCreated_at());
         if (r.getName() == null) {
@@ -71,18 +138,89 @@ public class SQLiteDAO implements RequirementDAO {
             ps.setString(6,"");
         } else {
             ps.setInt(4,1);
-            ps.setString(6, sentence2JSON(r.getSentence_text()).toString());
+            ps.setString(6,sentence2JSON(r.getSentence_text()).toString());
         }
+        if (r.getCluster() != null) {
+            ps.setInt(7,r.getCluster().getClusterid());
+            ps.setBoolean(8,r.isMaster());
+        }
+        ps.setString(9, stakeholderid);
         ps.execute();
-        c.close();
     }
 
     @Override
-    public Requirement getRequirement(String id_aux) throws SQLException {
-        c = DriverManager.getConnection("jdbc:sqlite:../semilar.db");
+    public void updateThreshold(String stakeholder, float threshold) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        try {
+            PreparedStatement ps;
+            ps = c.prepareStatement("SELECT COUNT(*) FROM stakeholders WHERE id = ?");
+            ps.setString(1, stakeholder);
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
+            rs.next();
+            int count = rs.getInt(1);
+
+            if (count == 0) {
+                ps = c.prepareStatement("INSERT INTO stakeholders (id, threshold) VALUES (?, ?)");
+                ps.setString(1, stakeholder);
+                ps.setFloat(2, threshold);
+            } else {
+                ps = c.prepareStatement("UPDATE stakeholders SET threshold = ? WHERE id = ?");
+                ps.setFloat(1, threshold);
+                ps.setString(2, stakeholder);
+            }
+            ps.execute();
+        } finally {
+            //c.close();
+        }
+    }
+
+    @Override
+    public void saveDependency(Dependency dependency, boolean accepted, String stakeholderid) throws SQLException, ClassNotFoundException {
+
+        if (c == null) c = getConnection();
+
+
+        try {
+            PreparedStatement ps;
+            /*ps = c.prepareStatement("DELETE FROM dependencies WHERE id = ?");
+            ps.setInt(1, cluster.getClusterid());
+            ps.execute();*/
+
+            ps = c.prepareStatement("INSERT INTO dependencies (fromid, toid, accepted, stakeholderid) VALUES (?, ?, ?, ?)");
+            ps.setString(1,dependency.getFromid());
+            ps.setString(2,dependency.getToid());
+            ps.setBoolean(3,accepted);
+            ps.setString(4,stakeholderid);
+            ps.execute();
+        } finally {
+            //c.close();
+        }
+    }
+
+    public float getThreshold(String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
         PreparedStatement ps;
-        ps = c.prepareStatement("SELECT id, created_at, name, text, sentence_name, sentence_text FROM prepocessed WHERE id = ?");
-        ps.setString(1, id_aux);
+        ps = c.prepareStatement("SELECT threshold FROM stakeholders WHERE id = ?");
+        ps.setString(1,stakeholderid);
+        ps.execute();
+        ResultSet rs = ps.getResultSet();
+
+        if (rs.next()) {
+            return rs.getFloat("threshold");
+        } else {
+            throw new SQLException("Stakeholder with id " + stakeholderid + " does not exist in DB");
+        }
+    }
+
+    @Override
+    public Requirement getRequirement(String id_aux, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+        ps = c.prepareStatement("SELECT id, created_at, name, text, sentence_name, sentence_text FROM prepocessed WHERE id = ? AND stakeholderid = ?");
+        ps.setString(1,id_aux);
+        ps.setString(2,stakeholderid);
         ps.execute();
         ResultSet rs = ps.getResultSet();
 
@@ -96,22 +234,151 @@ public class SQLiteDAO implements RequirementDAO {
             if (name == 1) sentence_name = JSON2Sentence(rs.getString("sentence_name"));
             if (text == 1) sentence_text = JSON2Sentence(rs.getString("sentence_text"));
             Requirement result = new Requirement(id,name,text,sentence_name,sentence_text,created_at);
-            c.close();
             return result;
         }
         else {
-            c.close();
             throw new SQLException("Requirement with id " + id_aux + " does not exist in DB");
         }
     }
 
     @Override
-    public void clearDB() throws SQLException {
-        c = DriverManager.getConnection("jdbc:sqlite:../semilar.db");
+    public List<Requirement> getRequirements(String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
         PreparedStatement ps;
-        ps = c.prepareStatement("DELETE FROM prepocessed");
+
+        try {
+            ps = c.prepareStatement("SELECT id, clusterid, master FROM prepocessed WHERE stakeholderid = ?");
+            ps.setString(1, stakeholderid);
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
+
+            List<Requirement> result = new ArrayList<>();
+
+            while (rs.next()) {
+                String id = rs.getString("id");
+                int cluster = rs.getInt("clusterid");
+                boolean master = rs.getBoolean("master");
+                result.add(new Requirement(id,cluster,master));
+            }
+
+            return result;
+        } finally {
+            //c.close();
+        }
+    }
+
+    @Override
+    public List<Dependency> getDependencies(String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        PreparedStatement ps;
+
+        try {
+            ps = c.prepareStatement("SELECT fromid, toid, accepted FROM dependencies WHERE stakeholderid = ?");
+            ps.setString(1, stakeholderid);
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
+
+            List<Dependency> result = new ArrayList<>();
+
+            while (rs.next()) {
+                String fromid = rs.getString("fromid");
+                String toid = rs.getString("toid");
+                boolean accepted = rs.getBoolean("accepted");
+                String status = "accepted";
+                if (!accepted) status = "rejected";
+                result.add(new Dependency(fromid,toid,status));
+            }
+
+            return result;
+        } finally {
+            //c.close();
+        }
+    }
+
+    @Override
+    public List<Stakeholder> getStakeholders() throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        PreparedStatement ps;
+
+        try {
+            ps = c.prepareStatement("SELECT id, threshold FROM stakeholders");
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
+
+            List<Stakeholder> result = new ArrayList<>();
+
+            while (rs.next()) {
+                String id = rs.getString("id");
+                float threshold = rs.getFloat("threshold");
+                result.add(new Stakeholder(id,threshold));
+            }
+
+            return result;
+        } finally {
+            //c.close();
+        }
+    }
+
+    @Override
+    public void deleteRequirement(Requirement requirement, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+
+        ps = c.prepareStatement("DELETE FROM prepocessed WHERE id = ? AND stakeholderid = ?");
+        ps.setString(1,requirement.getId());
+        ps.setString(2, stakeholderid);
         ps.execute();
-        c.close();
+    }
+
+    @Override
+    public void deleteDependency(Dependency dependency, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+
+        ps = c.prepareStatement("DELETE FROM dependencies WHERE fromid = ? AND toid = ? AND stakeholderid = ?");
+        ps.setString(1, dependency.getFromid());
+        ps.setString(2, dependency.getToid());
+        ps.setString(3, stakeholderid);
+        ps.execute();
+
+        ps = c.prepareStatement("DELETE FROM dependencies WHERE fromid = ? AND toid = ? AND stakeholderid = ?");
+        ps.setString(1, dependency.getToid());
+        ps.setString(2, dependency.getFromid());
+        ps.setString(3, stakeholderid);
+        ps.execute();
+    }
+
+    @Override
+    public void deleteRequirementDependencies(Requirement requirement, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+        ps = c.prepareStatement("DELETE FROM dependencies WHERE (fromid = ? OR toid = ?) AND stakeholderid = ?");
+        ps.setString(1, requirement.getId());
+        ps.setString(2, requirement.getId());
+        ps.setString(3, stakeholderid);
+        ps.execute();
+
+    }
+
+
+    @Override
+    public void clearDB() throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+        try {
+            ps = c.prepareStatement("DELETE FROM dependencies");
+            ps.execute();
+            ps = c.prepareStatement("DELETE FROM prepocessed");
+            ps.execute();
+            ps = c.prepareStatement("DELETE FROM stakeholders");
+            ps.execute();
+
+        } finally {
+            //c.close();
+        }
     }
 
     // Conversion Sentence <=> JSON

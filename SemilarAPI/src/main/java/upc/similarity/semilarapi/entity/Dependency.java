@@ -27,6 +27,12 @@ public class Dependency implements Serializable {
         description = new ArrayList<>();
     }
 
+    public Dependency(String fromid, String toid, String status) {
+        this.fromid = fromid;
+        this.toid = toid;
+        this.status = status;
+    }
+
     public Dependency(Float dependency_score, String fromid, String toid, String status, String dependency_type, String component) {
         this.dependency_score = dependency_score;
         this.fromid = fromid;
@@ -51,6 +57,10 @@ public class Dependency implements Serializable {
 
     public float getDependency_score() {
         return dependency_score;
+    }
+
+    public String getStatus() {
+        return status;
     }
 
     public String print_json() {
