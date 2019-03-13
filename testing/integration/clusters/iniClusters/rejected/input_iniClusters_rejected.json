@@ -1,0 +1,7 @@
+{"requirements":[
+    {"id":"QM-1","name":"Just testing the normal distribution","created_at":0},
+    {"id":"QM-2","name":"Are you testing this really?","created_at":0},
+    {"id":"QM-3","name":"Are you testing this really?","created_at":5}],
+"dependencies":[
+    {"toid":"QM-1","dependency_type":"duplicates","dependency_score":0.7,"fromid":"QM-2","status":"accepted"},
+    {"toid":"QM-1","dependency_type":"duplicates","dependency_score":0.7,"fromid":"QM-3","status":"rejected"}]}

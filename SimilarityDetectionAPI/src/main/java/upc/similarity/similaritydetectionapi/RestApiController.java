@@ -274,6 +274,27 @@ public class RestApiController {
     }
 
     @CrossOrigin
+    @RequestMapping(value = "/ComputeClusters", method = RequestMethod.POST)
+    @ApiOperation(value = "ComputeClusters")
+    public ResponseEntity<?> ComputeClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
+                                            @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam("compare") String compare,
+                                            @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
+
+        try {
+            url_ok(url);
+            if (compare == null) compare = "false";
+            return new ResponseEntity<>(similarityService.computeClusters(stakeholderId,compare,url),HttpStatus.OK);
+        } catch (BadRequestException e) {
+            return getResponseBadRequest(e);
+        } catch (NotFoundException e) {
+            return getResponseNotFound(e);
+        } catch (InternalErrorException e) {
+            return getInternalError(e);
+        }
+
+    }
+
+    @CrossOrigin
     @RequestMapping(value = "/UpdateClusters", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "UpdateClusters")
     public ResponseEntity<?> UpdateClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,

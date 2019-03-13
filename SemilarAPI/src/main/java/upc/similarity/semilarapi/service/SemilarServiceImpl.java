@@ -283,6 +283,7 @@ public class SemilarServiceImpl implements SemilarService {
 
         show_time("start loop dependencies");
         for (Dependency dependency: input.getDependencies()) {
+            //test dependency_type && status != null before
             if (dependency.getDependency_type().equals("duplicates") && dependency.getStatus().equals("accepted")) {
                 Requirement req1 = requirements_loaded.get(dependency.getFromid());
                 Requirement req2 = requirements_loaded.get(dependency.getToid());
@@ -304,8 +305,11 @@ public class SemilarServiceImpl implements SemilarService {
         show_time("finish loop dependencies");
 
         show_time("start requirements preprocess");
+        int cont = 0;
         for (Requirement requirement: input.getRequirements()) {
             try {
+                System.out.println(cont);
+                ++cont;
                 requirement.compute_sentence();
                 if (requirement.getCluster() == null) {
                     Cluster new_cluster = new Cluster();
@@ -414,6 +418,106 @@ public class SemilarServiceImpl implements SemilarService {
     }
 
     @Override
+    public void computeClusters(String compare, String stakeholderId, String filename) throws InternalErrorException, BadRequestException {
+
+        show_time("start initialization");
+
+        float threshold;
+        try {
+            threshold = requirementDAO.getThreshold(stakeholderId);
+        } catch (SQLException e) {
+            throw new BadRequestException("Database error: Stakeholder with id " + stakeholderId + " does not exists in db.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+
+        List<Requirement> loaded_requirements;
+        try {
+            loaded_requirements = requirementDAO.getRequirements(stakeholderId);
+        } catch (SQLException e) {
+            throw new InternalErrorException("Database error: Error while loading database requirements");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+
+        List<Cluster> clusters_listed = new ArrayList<>();
+        HashMap<Integer,Cluster> clusters = new HashMap<>();
+        HashMap<String,Requirement> hash_requirements = new HashMap<>();
+
+        for (Requirement requirement: loaded_requirements) {
+            hash_requirements.put(requirement.getId(),requirement);
+            int clusterId = requirement.getClusterId();
+            if(clusters.containsKey(clusterId)) {
+                clusters.get(clusterId).addReq(requirement);
+            } else {
+                Cluster aux_cluster = new Cluster(clusterId);
+                aux_cluster.addReq(requirement);
+                clusters.put(clusterId,aux_cluster);
+                clusters_listed.add(aux_cluster);
+            }
+        }
+
+        clusters = null;
+
+        ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
+
+        show_time("stop initialization");
+
+        show_time("start loop");
+        List<Dependency> result = new ArrayList<>();
+
+        if (true) all_to_all_algorithm(loaded_requirements,threshold,comparer,result,clusters_listed);
+        else all_to_masters_algorithm(loaded_requirements,threshold,comparer,result,clusters_listed);
+        show_time("stop loop");
+    }
+
+    private void all_to_all_algorithm(List<Requirement> loaded_requirements, float threshold, ComparisonBetweenSentences comparer, List<Dependency> result, List<Cluster> clusters_listed) {
+
+        for (int i = 0; i < loaded_requirements.size(); ++i) {
+            Requirement req1 = loaded_requirements.get(i);
+            for (int j = i + 1; j < loaded_requirements.size(); ++j) {
+                Requirement req2 = loaded_requirements.get(j);
+                Dependency aux = comparer.compare_two_requirements_dep(req1,req2);
+                if (aux != null && aux.getDependency_score() >= threshold) {
+                    if (req1.getCluster() != req2.getCluster()) {
+                        String old_master_req1 = req1.getCluster().getReq_older().getId();
+                        String old_master_req2 = req2.getCluster().getReq_older().getId();
+                        merge_clusters(req1.getCluster(), req2.getCluster());
+                        String new_master = req1.getCluster().getReq_older().getId();
+                        if (!old_master_req1.equals(new_master)) result.add(new Dependency(new_master,old_master_req1,"proposed","duplicates"));
+                        if (!old_master_req2.equals(new_master)) result.add(new Dependency(new_master,old_master_req2,"proposed","duplicates"));
+                        clusters_listed.remove(req2.getCluster());
+                    }
+                }
+            }
+        }
+    }
+
+    private void all_to_masters_algorithm(List<Requirement> loaded_requirements, float threshold, ComparisonBetweenSentences comparer, List<Dependency> result, List<Cluster> clusters_listed) {
+
+        for (int i = 0; i < loaded_requirements.size(); ++i) {
+            Requirement req1 = loaded_requirements.get(i);
+            for (int j = 0; j < clusters_listed.size(); ++j) {
+                Cluster cluster = clusters_listed.get(j);
+                if (cluster.getClusterid() != req1.getCluster().getClusterid()) {
+                    Requirement master = cluster.getReq_older();
+                    Dependency aux = comparer.compare_two_requirements_dep(req1, master);
+                    if (aux != null && aux.getDependency_score() >= threshold) {
+                        String old_master_req1 = req1.getCluster().getReq_older().getId();
+                        String old_master_cluster = cluster.getReq_older().getId();
+                        merge_clusters(req1.getCluster(),cluster);
+                        String new_master = req1.getCluster().getReq_older().getId();
+                        if (!old_master_req1.equals(new_master)) result.add(new Dependency(new_master,old_master_req1,"proposed","duplicates"));
+                        if (!old_master_cluster.equals(new_master)) result.add(new Dependency(new_master,old_master_cluster,"proposed","duplicates"));
+                        clusters_listed.remove(cluster);
+                        --j;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void modifyThreshold(String stakeholderId, float threshold) throws InternalErrorException {
         try {
             requirementDAO.updateThreshold(stakeholderId,threshold);
@@ -501,7 +605,7 @@ public class SemilarServiceImpl implements SemilarService {
             for (Requirement requirement : result) {
                 JSONObject json_dep = new JSONObject();
                 json_dep.put("id",requirement.getId());
-                json_dep.put("cluster",requirement.getCluster().getClusterid());
+                json_dep.put("cluster",requirement.getClusterId());
                 json_dep.put("master",requirement.isMaster());
                 jsonArray.put(json_dep);
             }
@@ -712,7 +816,7 @@ public class SemilarServiceImpl implements SemilarService {
                 Cluster aux_cluster_2 = clusters_with_superior_threshold.get(0);
                 String req_older = aux_cluster_2.getReq_older().getId();
                 aux_cluster_2.addReq(requirement);
-                if (aux_cluster_2.getReq_older().getId().equals(requirement.getId())) result_dependencies.add(new Dependency(requirement.getId(), req_older, "proposed"));
+                if (aux_cluster_2.getReq_older().getId().equals(requirement.getId())) result_dependencies.add(new Dependency(requirement.getId(), req_older, "proposed","duplicates"));
             } else {
                 Cluster aux_cluster = clusters_with_superior_threshold.get(0);
                 aux_cluster.addReq(requirement);
@@ -725,11 +829,11 @@ public class SemilarServiceImpl implements SemilarService {
                 }
                 if (aux_cluster.getReq_older().getId().equals(requirement.getId())) {
                     for (String req_older: reqs_older) {
-                        result_dependencies.add(new Dependency(requirement.getId(),req_older,"proposed"));
+                        result_dependencies.add(new Dependency(requirement.getId(),req_older,"proposed","duplicates"));
                     }
                 } else {
                     for (String req_older: reqs_older) {
-                        result_dependencies.add(new Dependency(aux_cluster.getReq_older().getId(),req_older,"proposed"));
+                        result_dependencies.add(new Dependency(aux_cluster.getReq_older().getId(),req_older,"proposed","duplicates"));
                     }
                 }
             }

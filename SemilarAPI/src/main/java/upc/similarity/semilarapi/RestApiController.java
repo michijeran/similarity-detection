@@ -88,6 +88,22 @@ public class RestApiController {
         }
     }
 
+    @RequestMapping(value = "/upc/Semilar/computeClusters", method = RequestMethod.POST)
+    public ResponseEntity<?> computeClusters(@RequestParam("compare") String compare,
+                                            @RequestParam("stakeholderId") String stakeholderId,
+                                            @RequestParam("filename") String filename) {
+        try {
+            semilarService.computeClusters(compare,stakeholderId,filename);
+            return new ResponseEntity<>(null,HttpStatus.OK);
+        } catch (InternalErrorException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(510));
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(e.getStatus()));
+        }
+    }
+
     @RequestMapping(value = "/upc/Semilar/updateClusters", method = RequestMethod.POST)
     public ResponseEntity<?> updateClusters(@RequestParam("compare") String compare,
                                          @RequestParam("stakeholderId") String stakeholderId,

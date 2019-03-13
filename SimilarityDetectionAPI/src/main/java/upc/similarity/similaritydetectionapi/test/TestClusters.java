@@ -40,14 +40,9 @@ public class TestClusters extends ControllerTest {
     }
 
     private String path = "../testing/integration/clusters/";
-    //private static boolean finished = false;
-    //private static Second_Result second_result = new Second_Result(null,null);
     @LocalServerPort
     private int port;
 
-    /*
-    Simple endpoints
-     */
     @Before
     public void aClearDB() {
         //auxiliary operation
@@ -62,6 +57,10 @@ public class TestClusters extends ControllerTest {
         }
     }
 
+    /*
+    ModifyThreshold operation
+     */
+
     @Test
     public void bModifyThreshold_simple() throws InterruptedException {
         First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.4&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
@@ -72,6 +71,9 @@ public class TestClusters extends ControllerTest {
         finished = false;
     }
 
+    /*
+    Ini Clusters operation
+     */
     @Test
     public void cIniClusters_simple() throws InterruptedException {
         connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.4&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
@@ -88,10 +90,6 @@ public class TestClusters extends ControllerTest {
         finished = false;
     }
 
-
-    /*
-    More complex endpoints
-     */
     @Test
     public void dIniClusters_addReq() throws InterruptedException {
         connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.4&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
@@ -139,6 +137,10 @@ public class TestClusters extends ControllerTest {
         assertEquals(read_file(path+"/iniClusters/rejected/output_iniClusters_rejected_dependencies.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetDependencies?stakeholderId=Test"));
         finished = false;
     }
+
+    /*
+    Compute clusters operation
+     */
 
 
 

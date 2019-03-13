@@ -268,6 +268,36 @@ public class SQLiteDAO implements RequirementDAO {
         }
     }
 
+    public String getRequirements_JSON(String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        PreparedStatement ps;
+
+        try {
+            //GROUP BY clusterid
+            ps = c.prepareStatement("SELECT clusterid, COUNT(*) FROM prepocessed WHERE stakeholderid = ? GROUP BY clusterid");
+            ps.setString(1, stakeholderid);
+            ps.execute();
+            ResultSet rs = ps.getResultSet();
+
+            JSONObject result = new JSONObject();
+            JSONArray array = new JSONArray();
+
+            while (rs.next()) {
+                JSONObject aux = new JSONObject();
+                int uno = rs.getInt(1);
+                int dos = rs.getInt(2);
+                aux.put("cluster",uno);
+                aux.put("number",dos);
+                array.put(aux);
+            }
+            result.put("clusters", array);
+            return result.toString();
+        } finally {
+            //c.close();
+        }
+    }
+
     @Override
     public List<Dependency> getDependencies(String stakeholderid) throws SQLException, ClassNotFoundException {
         if (c == null) c = getConnection();
@@ -288,7 +318,7 @@ public class SQLiteDAO implements RequirementDAO {
                 boolean accepted = rs.getBoolean("accepted");
                 String status = "accepted";
                 if (!accepted) status = "rejected";
-                result.add(new Dependency(fromid,toid,status));
+                result.add(new Dependency(fromid,toid,status,"duplicates"));
             }
 
             return result;

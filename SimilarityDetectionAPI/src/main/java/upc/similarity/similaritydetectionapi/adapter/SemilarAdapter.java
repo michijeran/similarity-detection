@@ -93,6 +93,12 @@ public class SemilarAdapter extends ComponentAdapter{
     }
 
     @Override
+    public void computeClusters(String compare, String filename, String stakeholderId) throws ComponentException, BadRequestException, NotFoundException {
+
+        connection_component(URL + "computeClusters?compare=" + compare + "&filename=" + filename + "&stakeholderId=" + stakeholderId,null);
+    }
+
+    @Override
     public void updateClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException {
 
         JSONArray reqs_json = list_requirements_to_JSON(requirements);

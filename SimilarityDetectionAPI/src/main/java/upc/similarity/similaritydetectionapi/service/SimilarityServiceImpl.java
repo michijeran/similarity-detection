@@ -350,6 +350,51 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
+    public Result_id computeClusters(String stakeholderId, String compare, String url) throws BadRequestException, InternalErrorException, NotFoundException {
+
+        String component = "Semilar";
+        Result_id id = get_id();
+
+        if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
+
+        //Create file to save result
+        File file = create_file(path+id.getId());
+
+        //New thread
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InputStream fis = null;
+                String success = "false";
+                try {
+                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
+                    componentAdapter.computeClusters(compare,id.getId(),stakeholderId);
+                    String result = "{\"result\":\"Success!\"}";
+                    fis = new ByteArrayInputStream(result.getBytes());
+                    success = "true";
+                } catch (ComponentException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
+                } catch (BadRequestException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
+                } catch (NotFoundException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(410,"Not found",e.getMessage()).getBytes());
+                }
+                finally {
+                    update_client(fis,url,id.getId(),success,"updateClusters");
+                    try {
+                        delete_file(file);
+                    } catch (InternalErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        });
+
+        thread.start();
+        return id;
+    }
+
+    @Override
     public Result_id updateClusters(String stakeholderId, String compare, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";

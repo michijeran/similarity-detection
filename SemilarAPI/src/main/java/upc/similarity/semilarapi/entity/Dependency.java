@@ -27,10 +27,11 @@ public class Dependency implements Serializable {
         description = new ArrayList<>();
     }
 
-    public Dependency(String fromid, String toid, String status) {
+    public Dependency(String fromid, String toid, String status, String dependency_type) {
         this.fromid = fromid;
         this.toid = toid;
         this.status = status;
+        this.dependency_type = dependency_type;
     }
 
     public Dependency(Float dependency_score, String fromid, String toid, String status, String dependency_type, String component) {

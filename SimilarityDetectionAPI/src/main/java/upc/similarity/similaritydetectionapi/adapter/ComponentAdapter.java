@@ -38,6 +38,8 @@ public abstract class ComponentAdapter {
 
     public abstract void updateClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
+    public abstract void computeClusters(String compare, String filename, String stakeholderId) throws ComponentException, BadRequestException, NotFoundException;
+
     public abstract void modifyThreshold(String stakeholderId, float threshold) throws ComponentException, BadRequestException;
 
     //auxiliary operations

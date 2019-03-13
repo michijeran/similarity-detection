@@ -82,6 +82,8 @@ public class Requirement implements Serializable {
                                 wait_timeout.notify();
                             }
                         } catch (Exception e) {
+                            //System.out.println("-------------------------------------------------------------__________"+name);
+                            //System.out.println("------------------------------------------------------------__________________"+text);
                             e.printStackTrace();
                         }
                     }
@@ -98,6 +100,14 @@ public class Requirement implements Serializable {
                     this.name = null;
                     this.text = null;
                     System.out.println("Requirement ignored. To much time spent.");
+                }
+                if (name != null && sentence_name == null) {
+                    name = null;
+                    System.out.println("error1");
+                }
+                if (text != null && sentence_text == null) {
+                    text = null;
+                    System.out.println("error2");
                 }
             }
         } catch (InterruptedException e) {
