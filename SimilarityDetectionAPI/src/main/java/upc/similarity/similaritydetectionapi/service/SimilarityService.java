@@ -23,7 +23,7 @@ public interface SimilarityService {
 
     public Result_id updateClusters(String stakeholderId, String compare, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException;
 
-    public Result_id computeClusters(String stakeholderId, String compare, String url) throws BadRequestException, InternalErrorException, NotFoundException;
+    public Result_id computeClusters(boolean type, String stakeholderId, String compare, String url) throws BadRequestException, InternalErrorException, NotFoundException;
 
     public Result_id modifyThreshold(String stakeholderId, float threshold, String url) throws InternalErrorException;
 

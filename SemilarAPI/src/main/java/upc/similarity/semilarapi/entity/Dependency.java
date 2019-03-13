@@ -1,17 +1,21 @@
 package upc.similarity.semilarapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-//Class use to represent dependencies between requirements
+//Class used to represent dependencies between requirements
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Dependency implements Serializable {
 
     @JsonProperty(value="dependency_score")
-    private float dependency_score;
+    private Float dependency_score;
     @JsonProperty(value="fromid")
     private String fromid;
     @JsonProperty(value="toid")
@@ -65,17 +69,18 @@ public class Dependency implements Serializable {
     }
 
     public String print_json() {
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        String jsonInString = "";
-        try {
-            jsonInString = mapper.writeValueAsString(this);
-        } catch (Exception e) {
-            e.printStackTrace();
+        JSONObject aux = new JSONObject();
+        aux.put("fromid", fromid);
+        aux.put("toid", toid);
+        if (status != null) aux.put("status",status);
+        if (dependency_score != null) aux.put("dependency_score",dependency_score);
+        if (dependency_type != null) aux.put("dependency_type",dependency_type);
+        if (description != null && description.size() > 0) {
+            JSONArray descr = new JSONArray();
+            for (String word : description) descr.put(word);
+            aux.put("description",descr);
         }
-
-        return jsonInString;
+        return aux.toString();
     }
 
     @Override

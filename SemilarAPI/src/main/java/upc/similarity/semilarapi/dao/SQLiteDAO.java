@@ -177,6 +177,25 @@ public class SQLiteDAO implements RequirementDAO {
     }
 
     @Override
+    public void updateRequirementCluster(Requirement requirement, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        try {
+            PreparedStatement ps;
+            ps = c.prepareStatement("UPDATE prepocessed SET master = ?, clusterid = ? WHERE id = ? AND stakeholderid = ?");
+            ps.setBoolean(1,requirement.isMaster());
+            ps.setInt(2,requirement.getCluster().getClusterid());
+            ps.setString(3,requirement.getId());
+            ps.setString(4,stakeholderid);
+            ps.execute();
+        } finally {
+            //c.close();
+        }
+
+    }
+
+
+    @Override
     public void saveDependency(Dependency dependency, boolean accepted, String stakeholderid) throws SQLException, ClassNotFoundException {
 
         if (c == null) c = getConnection();
@@ -237,7 +256,32 @@ public class SQLiteDAO implements RequirementDAO {
             return result;
         }
         else {
-            throw new SQLException("Requirement with id " + id_aux + " does not exist in DB");
+            throw new SQLException("The requirement with id " + id_aux + " does not exist in the database");
+        }
+    }
+
+    @Override
+    public Dependency getDependency(String fromid, String toid, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+        ps = c.prepareStatement("SELECT accepted FROM dependencies WHERE ((fromid = ? AND toid = ?) OR (toid = ? AND fromid = ?)) AND stakeholderid = ?");
+        ps.setString(1,fromid);
+        ps.setString(2,toid);
+        ps.setString(3,fromid);
+        ps.setString(4,toid);
+        ps.setString(5,stakeholderid);
+        ps.execute();
+        ResultSet rs = ps.getResultSet();
+
+        if (rs.next()) {
+            boolean accepted = rs.getBoolean("accepted");
+            String status = "accepted";
+            if (!accepted) status = "rejected";
+            Dependency dependency = new Dependency(fromid,toid,status,"duplicates");
+            return dependency;
+        }
+        else {
+            throw new SQLException("The dependency does not exist in the database");
         }
     }
 
@@ -248,7 +292,7 @@ public class SQLiteDAO implements RequirementDAO {
         PreparedStatement ps;
 
         try {
-            ps = c.prepareStatement("SELECT id, clusterid, master FROM prepocessed WHERE stakeholderid = ?");
+            ps = c.prepareStatement("SELECT id, clusterid, master, created_at, name, text, sentence_name, sentence_text FROM prepocessed WHERE stakeholderid = ?");
             ps.setString(1, stakeholderid);
             ps.execute();
             ResultSet rs = ps.getResultSet();
@@ -257,9 +301,17 @@ public class SQLiteDAO implements RequirementDAO {
 
             while (rs.next()) {
                 String id = rs.getString("id");
+                Long created_at = rs.getLong("created_at");
                 int cluster = rs.getInt("clusterid");
                 boolean master = rs.getBoolean("master");
-                result.add(new Requirement(id,cluster,master));
+                int name = rs.getInt("name");
+                int text = rs.getInt("text");
+                Sentence sentence_name = null;
+                Sentence sentence_text = null;
+                if (name == 1) sentence_name = JSON2Sentence(rs.getString("sentence_name"));
+                if (text == 1) sentence_text = JSON2Sentence(rs.getString("sentence_text"));
+                Requirement aux = new Requirement(id,cluster,master,name,text,sentence_name,sentence_text,created_at);
+                result.add(aux);
             }
 
             return result;
@@ -268,7 +320,7 @@ public class SQLiteDAO implements RequirementDAO {
         }
     }
 
-    public String getRequirements_JSON(String stakeholderid) throws SQLException, ClassNotFoundException {
+    /*public String getRequirements_JSON(String stakeholderid) throws SQLException, ClassNotFoundException {
         if (c == null) c = getConnection();
 
         PreparedStatement ps;
@@ -296,7 +348,7 @@ public class SQLiteDAO implements RequirementDAO {
         } finally {
             //c.close();
         }
-    }
+    }*/
 
     @Override
     public List<Dependency> getDependencies(String stakeholderid) throws SQLException, ClassNotFoundException {

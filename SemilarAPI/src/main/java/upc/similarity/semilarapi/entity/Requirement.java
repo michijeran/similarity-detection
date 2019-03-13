@@ -35,10 +35,25 @@ public class Requirement implements Serializable {
 
     public Requirement() {}
 
-    public Requirement(String id, int clusterid, boolean master) {
+    public Requirement(String id, int clusterid, boolean master, int name, int text, Sentence sentence_name, Sentence sentence_text, long created_at) {
         this.id = id;
         this.clusterId = clusterid;
         this.master = master;
+        this.created_at = created_at;
+        if (name == 0) {
+            this.name = null;
+            this.sentence_name = null;
+        } else {
+            this.name = sentence_name.getRawForm();
+            this.sentence_name = sentence_name;
+        }
+        if (text == 0) {
+            this.text = null;
+            this.sentence_text = null;
+        } else {
+            this.text = sentence_text.getRawForm();
+            this.sentence_text = sentence_text;
+        }
     }
 
     public Requirement(String id, int name, int text, Sentence sentence_name, Sentence sentence_text, long created_at) {

@@ -13,7 +13,11 @@ public interface RequirementDAO {
 
     public Requirement getRequirement(String id, String stakeholderid) throws SQLException, ClassNotFoundException;
 
+    public Dependency getDependency(String fromid, String toid, String stakeholderid) throws SQLException, ClassNotFoundException;
+
     public void updateThreshold(String stakeholder, float threshold) throws SQLException, ClassNotFoundException;
+
+    public void updateRequirementCluster(Requirement requirement, String stakeholderid) throws SQLException, ClassNotFoundException;
 
     public void saveDependency(Dependency dependency, boolean accepted, String stakeholderid) throws SQLException, ClassNotFoundException;
 

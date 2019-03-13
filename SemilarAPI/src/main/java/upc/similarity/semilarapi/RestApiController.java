@@ -91,9 +91,10 @@ public class RestApiController {
     @RequestMapping(value = "/upc/Semilar/computeClusters", method = RequestMethod.POST)
     public ResponseEntity<?> computeClusters(@RequestParam("compare") String compare,
                                             @RequestParam("stakeholderId") String stakeholderId,
+                                            @RequestParam("type") boolean type,
                                             @RequestParam("filename") String filename) {
         try {
-            semilarService.computeClusters(compare,stakeholderId,filename);
+            semilarService.computeClusters(type,compare,stakeholderId,filename);
             return new ResponseEntity<>(null,HttpStatus.OK);
         } catch (InternalErrorException e) {
             e.printStackTrace();

@@ -278,12 +278,13 @@ public class RestApiController {
     @ApiOperation(value = "ComputeClusters")
     public ResponseEntity<?> ComputeClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
                                             @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam("compare") String compare,
+                                            @ApiParam(value="Compute all requirements?", required = true, example = "true") @RequestParam("type") boolean type,
                                             @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
         try {
             url_ok(url);
             if (compare == null) compare = "false";
-            return new ResponseEntity<>(similarityService.computeClusters(stakeholderId,compare,url),HttpStatus.OK);
+            return new ResponseEntity<>(similarityService.computeClusters(type,stakeholderId,compare,url),HttpStatus.OK);
         } catch (BadRequestException e) {
             return getResponseBadRequest(e);
         } catch (NotFoundException e) {

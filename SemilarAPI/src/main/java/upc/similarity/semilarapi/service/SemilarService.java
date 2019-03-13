@@ -28,7 +28,7 @@ public interface SemilarService {
 
     public void updateClusters(String compare, String stakeholderId, String filename, IniClusterOp input) throws InternalErrorException, BadRequestException;
 
-    public void computeClusters(String compare, String stakeholderId, String filename) throws InternalErrorException, BadRequestException;
+    public void computeClusters(boolean type, String compare, String stakeholderId, String filename) throws InternalErrorException, BadRequestException;
 
     public void modifyThreshold(String stakeholderId, float threshold) throws InternalErrorException;
 
