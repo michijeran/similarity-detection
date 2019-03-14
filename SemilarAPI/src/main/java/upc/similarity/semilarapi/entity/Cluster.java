@@ -9,25 +9,25 @@ import java.util.List;
 
 public class Cluster implements Serializable {
 
-    private int clusterid;
+    private long clusterid;
     private Requirement req_older;
     private List<Requirement> specifiedRequirements;
     private static int count = 1;
 
     private Timestamp req_time;
 
-    public Cluster(int id) {
+    public Cluster(long id) {
         clusterid = id;
         req_older = null;
         specifiedRequirements = new ArrayList<>();
     }
 
-    public Cluster() {
+    /*public Cluster() {
         clusterid = count;
         ++count;
         req_older = null;
         specifiedRequirements = new ArrayList<>();
-    }
+    }*/
 
     public Requirement getReq_older() {
         return req_older;
@@ -37,7 +37,7 @@ public class Cluster implements Serializable {
         return specifiedRequirements;
     }
 
-    public int getClusterid() {
+    public long getClusterid() {
         return clusterid;
     }
 

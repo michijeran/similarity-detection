@@ -45,6 +45,7 @@ public class SQLiteDAO implements RequirementDAO {
         String sql = "CREATE TABLE IF NOT EXISTS stakeholders (\n"
                 + "	id varchar NOT NULL, \n"
                 + " threshold float NOT NULL, \n"
+                + " last_id_cluster integer NOT NULL, \n"
                 + " PRIMARY KEY(id)"
                 + ");";
 
@@ -113,6 +114,24 @@ public class SQLiteDAO implements RequirementDAO {
     }
 
     @Override
+    public void createStakeholder(String stakeholderid, float threshold, long last_id_cluster) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        try {
+            PreparedStatement ps;
+
+            ps = c.prepareStatement("INSERT INTO stakeholders (id, threshold, last_id_cluster) VALUES (?, ?, ?)");
+            ps.setString(1,stakeholderid);
+            ps.setFloat(2,threshold);
+            ps.setLong(3,last_id_cluster);
+            ps.execute();
+        } finally {
+            //c.close();
+        }
+
+    }
+
+    @Override
     public void savePreprocessed(Requirement r, String stakeholderid) throws SQLException, ClassNotFoundException {
         if (c == null) c = getConnection();
 
@@ -141,7 +160,7 @@ public class SQLiteDAO implements RequirementDAO {
             ps.setString(6,sentence2JSON(r.getSentence_text()).toString());
         }
         if (r.getCluster() != null) {
-            ps.setInt(7,r.getCluster().getClusterid());
+            ps.setLong(7,r.getCluster().getClusterid());
             ps.setBoolean(8,r.isMaster());
         }
         ps.setString(9, stakeholderid);
@@ -154,22 +173,10 @@ public class SQLiteDAO implements RequirementDAO {
 
         try {
             PreparedStatement ps;
-            ps = c.prepareStatement("SELECT COUNT(*) FROM stakeholders WHERE id = ?");
-            ps.setString(1, stakeholder);
-            ps.execute();
-            ResultSet rs = ps.getResultSet();
-            rs.next();
-            int count = rs.getInt(1);
+            ps = c.prepareStatement("UPDATE stakeholders SET threshold = ? WHERE id = ?");
+            ps.setFloat(1, threshold);
+            ps.setString(2, stakeholder);
 
-            if (count == 0) {
-                ps = c.prepareStatement("INSERT INTO stakeholders (id, threshold) VALUES (?, ?)");
-                ps.setString(1, stakeholder);
-                ps.setFloat(2, threshold);
-            } else {
-                ps = c.prepareStatement("UPDATE stakeholders SET threshold = ? WHERE id = ?");
-                ps.setFloat(1, threshold);
-                ps.setString(2, stakeholder);
-            }
             ps.execute();
         } finally {
             //c.close();
@@ -184,7 +191,7 @@ public class SQLiteDAO implements RequirementDAO {
             PreparedStatement ps;
             ps = c.prepareStatement("UPDATE prepocessed SET master = ?, clusterid = ? WHERE id = ? AND stakeholderid = ?");
             ps.setBoolean(1,requirement.isMaster());
-            ps.setInt(2,requirement.getCluster().getClusterid());
+            ps.setLong(2,requirement.getCluster().getClusterid());
             ps.setString(3,requirement.getId());
             ps.setString(4,stakeholderid);
             ps.execute();
@@ -193,6 +200,22 @@ public class SQLiteDAO implements RequirementDAO {
         }
 
     }
+
+    @Override
+    public void updateLastClusterId(long new_value, String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        try {
+            PreparedStatement ps;
+            ps = c.prepareStatement("UPDATE stakeholders SET last_id_cluster = ? WHERE id = ?");
+            ps.setLong(1,new_value);
+            ps.setString(2,stakeholderid);
+            ps.execute();
+        } finally {
+            //c.close();
+        }
+    }
+
 
 
     @Override
@@ -218,6 +241,25 @@ public class SQLiteDAO implements RequirementDAO {
         }
     }
 
+    @Override
+    public long getLastClusterId(String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+
+        PreparedStatement ps;
+        ps = c.prepareStatement("SELECT last_id_cluster FROM stakeholders WHERE id = ?");
+        ps.setString(1,stakeholderid);
+        ps.execute();
+        ResultSet rs = ps.getResultSet();
+
+        if (rs.next()) {
+            return rs.getLong("last_id_cluster");
+        } else {
+            throw new SQLException("Stakeholder with id " + stakeholderid + " does not exist in DB");
+        }
+
+    }
+
+    @Override
     public float getThreshold(String stakeholderid) throws SQLException, ClassNotFoundException {
         if (c == null) c = getConnection();
         PreparedStatement ps;
@@ -302,7 +344,7 @@ public class SQLiteDAO implements RequirementDAO {
             while (rs.next()) {
                 String id = rs.getString("id");
                 Long created_at = rs.getLong("created_at");
-                int cluster = rs.getInt("clusterid");
+                long cluster = rs.getLong("clusterid");
                 boolean master = rs.getBoolean("master");
                 int name = rs.getInt("name");
                 int text = rs.getInt("text");

@@ -131,6 +131,9 @@ public class RestApiController {
         } catch (InternalErrorException e) {
             e.printStackTrace();
             return new ResponseEntity<>(e,HttpStatus.valueOf(510));
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(e.getStatus()));
         }
     }
 

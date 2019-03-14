@@ -25,9 +25,11 @@ public class Requirement implements Serializable {
     private String text;
     @JsonProperty(value="created_at")
     private Long created_at;
+    @JsonProperty(value="status")
+    private String status;
 
     private Cluster cluster;
-    private int clusterId;
+    private long clusterId;
     private boolean master;
 
     private Sentence sentence_name;
@@ -35,7 +37,7 @@ public class Requirement implements Serializable {
 
     public Requirement() {}
 
-    public Requirement(String id, int clusterid, boolean master, int name, int text, Sentence sentence_name, Sentence sentence_text, long created_at) {
+    public Requirement(String id, long clusterid, boolean master, int name, int text, Sentence sentence_name, Sentence sentence_text, long created_at) {
         this.id = id;
         this.clusterId = clusterid;
         this.master = master;
@@ -144,6 +146,7 @@ public class Requirement implements Serializable {
     }
 
     private String clean_text(String text, int clean) {
+        text = text.replaceAll("_", "");
         if (clean == 0) return text;
         else if (clean == 1) {
 
@@ -251,7 +254,7 @@ public class Requirement implements Serializable {
         return cluster;
     }
 
-    public int getClusterId() {
+    public long getClusterId() {
         return clusterId;
     }
 

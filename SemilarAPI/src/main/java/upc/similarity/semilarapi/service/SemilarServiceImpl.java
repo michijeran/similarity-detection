@@ -274,9 +274,17 @@ public class SemilarServiceImpl implements SemilarService {
     }
 
     @Override
-    public void modifyThreshold(String stakeholderId, float threshold) throws InternalErrorException {
+    public void modifyThreshold(String stakeholderId, float threshold) throws InternalErrorException, BadRequestException {
         try {
-            requirementDAO.updateThreshold(stakeholderId,threshold);
+            requirementDAO.createStakeholder(stakeholderId,threshold,0);
+        } catch (SQLException e) {
+            if (!e.getMessage().contains("PRIMARY KEY")) throw new InternalErrorException("Database exception: Error while creating new organization.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+
+        try {
+            requirementDAO.updateThreshold(stakeholderId, threshold);
         } catch (SQLException e) {
             throw new InternalErrorException("Database exception: Error while updating threshold.");
         } catch (ClassNotFoundException e) {
@@ -286,6 +294,17 @@ public class SemilarServiceImpl implements SemilarService {
 
     @Override
     public void iniClusters(String compare, String stakeholderId, String filename, IniClusterOp input) throws InternalErrorException, BadRequestException {
+
+        long last_cluster_id;
+
+        try {
+            last_cluster_id = requirementDAO.getLastClusterId(stakeholderId);
+        } catch (SQLException e) {
+            if (e.getMessage().contains("Stakeholder with id")) throw new BadRequestException("Database exception: " + e.getMessage());
+            throw new InternalErrorException("Database exception: Error while loading clusters.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
 
         HashMap<String,Requirement> requirements_loaded = new HashMap<>();
         for (Requirement requirement: input.getRequirements()) requirements_loaded.put(requirement.getId(), requirement);
@@ -299,7 +318,8 @@ public class SemilarServiceImpl implements SemilarService {
                 Requirement req1 = requirements_loaded.get(dependency.getFromid());
                 Requirement req2 = requirements_loaded.get(dependency.getToid());
                 if (req1.getCluster() == null && req2.getCluster() == null) {
-                    Cluster new_cluster = new Cluster();
+                    Cluster new_cluster = new Cluster(last_cluster_id);
+                    ++last_cluster_id;
                     new_cluster.addReq(req1);
                     new_cluster.addReq(req2);
                     clusters.add(new_cluster);
@@ -323,7 +343,8 @@ public class SemilarServiceImpl implements SemilarService {
                 ++cont;
                 requirement.compute_sentence();
                 if (requirement.getCluster() == null) {
-                    Cluster new_cluster = new Cluster();
+                    Cluster new_cluster = new Cluster(last_cluster_id);
+                    ++last_cluster_id;
                     new_cluster.addReq(requirement);
                 }
                 requirementDAO.savePreprocessed(requirement,stakeholderId);
@@ -359,6 +380,14 @@ public class SemilarServiceImpl implements SemilarService {
             }
         }
         show_time("stop saving dependencies");
+
+        try {
+            requirementDAO.updateLastClusterId(last_cluster_id,stakeholderId);
+        } catch (SQLException e) {
+            throw new BadRequestException("Database exception: Error while updating clusters.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
     }
 
     @Override
@@ -385,10 +414,10 @@ public class SemilarServiceImpl implements SemilarService {
         }
 
         List<Cluster> clusters_listed = new ArrayList<>();
-        HashMap<Integer,Cluster> clusters = new HashMap<>();
+        HashMap<Long,Cluster> clusters = new HashMap<>();
 
         for (Requirement requirement: loaded_requirements) {
-            int clusterId = requirement.getClusterId();
+            long clusterId = requirement.getClusterId();
             if(clusters.containsKey(clusterId)) {
                 clusters.get(clusterId).addReq(requirement);
             } else {
@@ -524,6 +553,17 @@ public class SemilarServiceImpl implements SemilarService {
 
         show_time("start initialization");
 
+        long last_cluster_id;
+
+        try {
+            last_cluster_id = requirementDAO.getLastClusterId(stakeholderId);
+        } catch (SQLException e) {
+            if (e.getMessage().contains("Stakeholder with id")) throw new BadRequestException("Database exception: " + e.getMessage());
+            throw new InternalErrorException("Database exception: Error while loading clusters.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+
         float threshold;
         try {
             threshold = requirementDAO.getThreshold(stakeholderId);
@@ -543,12 +583,12 @@ public class SemilarServiceImpl implements SemilarService {
         }
 
         List<Cluster> clusters_listed = new ArrayList<>();
-        HashMap<Integer,Cluster> clusters = new HashMap<>();
+        HashMap<Long,Cluster> clusters = new HashMap<>();
         HashMap<String,Requirement> hash_requirements = new HashMap<>();
 
         for (Requirement requirement: loaded_requirements) {
             hash_requirements.put(requirement.getId(),requirement);
-            int clusterId = requirement.getClusterId();
+            long clusterId = requirement.getClusterId();
             if(clusters.containsKey(clusterId)) {
                 clusters.get(clusterId).addReq(requirement);
             } else {
@@ -575,15 +615,23 @@ public class SemilarServiceImpl implements SemilarService {
 
         ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
 
-        update_deleted_rejected_dependencies(input.getDependencies(),hash_requirements,free_requirements,comparer,threshold, stakeholderId);
+        update_deleted_rejected_dependencies(input.getDependencies(),hash_requirements,free_requirements,comparer,threshold, stakeholderId,last_cluster_id);
 
         update_deleted_requirements(deleted_requirements,free_requirements,clusters_listed,stakeholderId);
 
-        update_added_accepted_dependencies(added_dependencies,hash_requirements,clusters_listed,dependencies_to_add,stakeholderId);
+        update_added_accepted_dependencies(added_dependencies,hash_requirements,clusters_listed,dependencies_to_add,stakeholderId,last_cluster_id);
 
         update_edited_requirements(edited_requirements,free_requirements,clusters_listed,stakeholderId);
 
-        update_added_requirements(added_requirements,clusters_listed,result_dependencies,comparer,threshold,stakeholderId);
+        update_added_requirements(added_requirements,clusters_listed,result_dependencies,comparer,threshold,stakeholderId,last_cluster_id);
+
+        try {
+            requirementDAO.updateLastClusterId(last_cluster_id,stakeholderId);
+        } catch (SQLException e) {
+            throw new BadRequestException("Database exception: Error while updating clusters.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
     }
 
     //Database
@@ -710,7 +758,7 @@ public class SemilarServiceImpl implements SemilarService {
     auxiliary operations
      */
 
-    private void update_deleted_rejected_dependencies(List<Dependency> dependencies, HashMap<String,Requirement> requirements, List<Requirement> free_requirements, ComparisonBetweenSentences comparer, float threshold, String stakeholderid) throws InternalErrorException, BadRequestException {
+    private void update_deleted_rejected_dependencies(List<Dependency> dependencies, HashMap<String,Requirement> requirements, List<Requirement> free_requirements, ComparisonBetweenSentences comparer, float threshold, String stakeholderid, long last_cluster_id) throws InternalErrorException, BadRequestException {
 
         for (Dependency dependency: dependencies) {
             if (dependency.getDependency_type().equals("duplicates") && (dependency.getStatus().equals("deleted") || dependency.getStatus().equals("rejected"))) {
@@ -735,7 +783,7 @@ public class SemilarServiceImpl implements SemilarService {
                         free_requirements.add(req1);
                         free_requirements.add(req2);
                     } else {
-                        split_and_join_clusters(req1,req2,comparer,threshold);
+                        split_and_join_clusters(req1,req2,comparer,threshold,last_cluster_id);
                     }
                 }
             }
@@ -747,7 +795,7 @@ public class SemilarServiceImpl implements SemilarService {
         return req1.getSpecifiedRequirements().size() > 2;
     }
 
-    private void split_and_join_clusters(Requirement req1, Requirement req2, ComparisonBetweenSentences comparer, float threshold) {
+    private void split_and_join_clusters(Requirement req1, Requirement req2, ComparisonBetweenSentences comparer, float threshold, long last_cluster_id) {
 
         Cluster aux_cluster = req1.getCluster();
         List<Requirement> split1 = new ArrayList<>();
@@ -780,7 +828,8 @@ public class SemilarServiceImpl implements SemilarService {
         }
 
         if (!found) {
-            Cluster cluster = new Cluster();
+            Cluster cluster = new Cluster(last_cluster_id);
+            ++last_cluster_id;
             for (Requirement requirement: split2) {
                 cluster.addReq(requirement);
             }
@@ -815,7 +864,7 @@ public class SemilarServiceImpl implements SemilarService {
         }
     }
 
-    private void update_added_accepted_dependencies(List<Dependency> dependencies, HashMap<String,Requirement> requirements, List<Cluster> clusters, List<Dependency> dependencies_to_add, String stakeholderid) throws InternalErrorException {
+    private void update_added_accepted_dependencies(List<Dependency> dependencies, HashMap<String,Requirement> requirements, List<Cluster> clusters, List<Dependency> dependencies_to_add, String stakeholderid, long last_cluster_id) throws InternalErrorException {
 
         for (Dependency dependency: dependencies) {
             try {
@@ -828,7 +877,8 @@ public class SemilarServiceImpl implements SemilarService {
                 Requirement req1 = requirements.get(dependency.getFromid());
                 Requirement req2 = requirements.get(dependency.getToid());
                 if (req1.getCluster() == null && req2.getCluster() == null) {
-                    Cluster new_cluster = new Cluster();
+                    Cluster new_cluster = new Cluster(last_cluster_id);
+                    ++last_cluster_id;
                     new_cluster.addReq(req1);
                     new_cluster.addReq(req2);
                     clusters.add(new_cluster);
@@ -856,7 +906,7 @@ public class SemilarServiceImpl implements SemilarService {
         }
     }
 
-    private void update_added_requirements(List<Requirement> requirements, List<Cluster> clusters, List<Dependency> result_dependencies, ComparisonBetweenSentences comparer, float threshold, String stakeholderId) throws BadRequestException, InternalErrorException{
+    private void update_added_requirements(List<Requirement> requirements, List<Cluster> clusters, List<Dependency> result_dependencies, ComparisonBetweenSentences comparer, float threshold, String stakeholderId, long last_cluster_id) throws BadRequestException, InternalErrorException{
 
         for (Requirement requirement: requirements) {
             List<Cluster> clusters_with_superior_threshold = new ArrayList<>();
@@ -867,7 +917,8 @@ public class SemilarServiceImpl implements SemilarService {
                 }
             }
             if (clusters_with_superior_threshold.size() == 0) {
-                Cluster aux_cluster = new Cluster();
+                Cluster aux_cluster = new Cluster(last_cluster_id);
+                ++last_cluster_id;
                 aux_cluster.addReq(requirement);
                 clusters.add(aux_cluster);
             } else if (clusters_with_superior_threshold.size() == 1) {

@@ -26,6 +26,8 @@ public class Requirement implements Serializable {
     private String text;
     @JsonProperty(value="created_at")
     private Long created_at;
+    @JsonProperty(value="status")
+    private String status;
 
     /*@JsonProperty(value="comments")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -57,6 +59,7 @@ public class Requirement implements Serializable {
         json.put("name",name);
         json.put("text",text);
         json.put("created_at",created_at);
+        json.put("status",status);
         return json;
     }
 }

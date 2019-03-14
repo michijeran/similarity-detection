@@ -19,7 +19,7 @@ public class DriverDatabase {
     public static void main(String[] args) {
         try {
             SQLiteDAO db = new SQLiteDAO();
-            String filename = "/home/ferran/Documents/trabajo/DOCS_Qt/datasets_date/output/clusters_iniClusters.json";
+            String filename = "";
             Path p = Paths.get(filename);
             //db.createDatabase();
             /*SemilarService ss = new SemilarServiceImpl();

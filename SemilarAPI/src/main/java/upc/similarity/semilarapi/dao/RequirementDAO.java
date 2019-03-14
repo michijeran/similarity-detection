@@ -9,7 +9,11 @@ import java.util.List;
 
 public interface RequirementDAO {
 
+    public void createStakeholder(String stakeholderid, float threshold, long last_id_cluster) throws SQLException, ClassNotFoundException;
+
     public void savePreprocessed(Requirement r, String stakeholderid) throws SQLException, ClassNotFoundException;
+
+    public long getLastClusterId(String stakeholderid) throws SQLException, ClassNotFoundException;
 
     public Requirement getRequirement(String id, String stakeholderid) throws SQLException, ClassNotFoundException;
 
@@ -18,6 +22,8 @@ public interface RequirementDAO {
     public void updateThreshold(String stakeholder, float threshold) throws SQLException, ClassNotFoundException;
 
     public void updateRequirementCluster(Requirement requirement, String stakeholderid) throws SQLException, ClassNotFoundException;
+
+    public void updateLastClusterId(long new_value, String stakeholderid) throws SQLException, ClassNotFoundException;
 
     public void saveDependency(Dependency dependency, boolean accepted, String stakeholderid) throws SQLException, ClassNotFoundException;
 
