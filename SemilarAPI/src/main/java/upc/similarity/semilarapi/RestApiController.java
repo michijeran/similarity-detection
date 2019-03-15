@@ -107,11 +107,12 @@ public class RestApiController {
 
     @RequestMapping(value = "/upc/Semilar/updateClusters", method = RequestMethod.POST)
     public ResponseEntity<?> updateClusters(@RequestParam("compare") String compare,
+                                            @RequestParam("type") boolean type,
                                          @RequestParam("stakeholderId") String stakeholderId,
                                          @RequestParam("filename") String filename,
                                          @RequestBody IniClusterOp input) {
         try {
-            semilarService.updateClusters(compare,stakeholderId,filename,input);
+            semilarService.updateClusters(type,compare,stakeholderId,filename,input);
             return new ResponseEntity<>(null,HttpStatus.OK);
         } catch (InternalErrorException e) {
             e.printStackTrace();

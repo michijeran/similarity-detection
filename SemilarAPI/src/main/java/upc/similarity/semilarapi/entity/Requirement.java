@@ -254,12 +254,16 @@ public class Requirement implements Serializable {
         return cluster;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
     public long getClusterId() {
         return clusterId;
     }
 
-    public void setClusterid(Cluster clusterid) {
-        this.cluster = clusterid;
+    public void setCluster(Cluster cluster) {
+        this.cluster = cluster;
     }
 
     public void setSentence_name(Sentence sentence_name) {
@@ -280,6 +284,10 @@ public class Requirement implements Serializable {
 
     public Sentence getSentence_name() {
         return sentence_name;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public void setName(String name) {

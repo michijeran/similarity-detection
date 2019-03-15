@@ -33,9 +33,9 @@ public class JsonCluster implements Serializable {
         return requirements;
     }
 
-    public boolean OK() {
+    /*public boolean OK() {
         if (requirements.size() == 0) return false;
         else return true;
-    }
+    }*/
 
 }

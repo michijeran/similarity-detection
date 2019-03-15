@@ -300,13 +300,14 @@ public class RestApiController {
     @ApiOperation(value = "UpdateClusters")
     public ResponseEntity<?> UpdateClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
                                                 @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam("compare") String compare,
+                                                @ApiParam(value="Compute all requirements?", required = true, example = "true") @RequestParam("type") boolean type,
                                                 @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
                                                 @ApiParam(value="OpenreqJson with the updated data", required = true) @RequestBody JsonCluster json) {
 
         try {
             url_ok(url);
             if (compare == null) compare = "false";
-            return new ResponseEntity<>(similarityService.updateClusters(stakeholderId,compare,url,json),HttpStatus.OK);
+            return new ResponseEntity<>(similarityService.updateClusters(type,stakeholderId,compare,url,json),HttpStatus.OK);
         } catch (BadRequestException e) {
             return getResponseBadRequest(e);
         } catch (NotFoundException e) {

@@ -42,7 +42,7 @@ public class Cluster implements Serializable {
     }
 
     public void addReq(Requirement requirement) {
-        requirement.setClusterid(this);
+        requirement.setCluster(this);
         requirement.setMaster(false);
         if (req_older == null) {
             req_older = requirement;
@@ -67,7 +67,7 @@ public class Cluster implements Serializable {
     public void removeReq(Requirement requirement) {
         specifiedRequirements.remove(requirement);
         requirement.setMaster(false);
-        requirement.setClusterid(null);
+        requirement.setCluster(null);
         if (requirement == req_older) {
             if (specifiedRequirements.size() > 0) {
                 req_older = specifiedRequirements.get(0);

@@ -99,7 +99,7 @@ public class SemilarAdapter extends ComponentAdapter{
     }
 
     @Override
-    public void updateClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException {
+    public void updateClusters(boolean type, String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException {
 
         JSONArray reqs_json = list_requirements_to_JSON(requirements);
         JSONArray deps_json = list_dependencies_to_JSON(dependencies);
@@ -108,7 +108,7 @@ public class SemilarAdapter extends ComponentAdapter{
         json_to_send.put("requirements", reqs_json);
         json_to_send.put("dependencies", deps_json);
 
-        connection_component(URL + "updateClusters?compare=" + compare + "&filename=" + filename + "&stakeholderId=" + stakeholderId,json_to_send);
+        connection_component(URL + "updateClusters?compare=" + compare + "&filename=" + filename + "&stakeholderId=" + stakeholderId + "&type=" + type,json_to_send);
     }
 
     @Override

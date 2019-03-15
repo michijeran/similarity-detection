@@ -1,0 +1,3 @@
+{"dependencies":[
+    {"fromid":"QM-4","toid":"QM-5","dependency_type":"duplicates","status":"rejected"},
+    {"fromid":"QM-6","toid":"QM-7","dependency_type":"duplicates","status":"deleted"}]}

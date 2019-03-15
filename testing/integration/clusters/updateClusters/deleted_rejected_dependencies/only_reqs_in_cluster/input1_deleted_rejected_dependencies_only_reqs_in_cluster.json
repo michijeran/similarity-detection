@@ -1,0 +1,6 @@
+{"requirements":[
+    {"id":"QM-1","name":"Just testing the normal distribution","created_at":0},
+    {"id":"QM-2","name":"Just testing the normal distribution","created_at":0}],
+"dependencies": [
+    {"fromid":"QM-1","toid":"QM-2","dependency_type":"duplicates","status":"accepted"}
+]}
