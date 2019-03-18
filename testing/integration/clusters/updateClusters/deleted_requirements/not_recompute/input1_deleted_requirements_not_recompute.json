@@ -1,0 +1,8 @@
+{"requirements":[
+    {"id":"QM-1","name":"Is the house empty?","created_at":4},
+    {"id":"QM-2","name":"Is the house empty? Release the boat.","created_at":50},
+    {"id":"QM-3","name":"Yesterday I talked with Peter. Release the boat.","created_at":40},
+    {"id":"QM-4","name":"Is the house empty? Release the boat.","created_at":1}],
+"dependencies":[
+    {"fromid":"QM-2","toid":"QM-3","dependency_type":"duplicates","status":"accepted"},
+    {"fromid":"QM-2","toid":"QM-4","dependency_type":"duplicates","status":"accepted"}]}
