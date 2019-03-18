@@ -614,11 +614,9 @@ public class SemilarServiceImpl implements SemilarService {
 
         update_deleted_rejected_dependencies(requirements_to_update,requirements_to_add,input.getDependencies(),clusters_listed,hash_requirements,comparer,threshold, stakeholderId,last_cluster_id);
 
-        update_deleted_requirements(requirements_to_update,requirements_to_add,hash_requirements,input.getRequirements(),clusters_listed,stakeholderId);
+        update_deleted_edited_requirements(requirements_to_update,requirements_to_add,hash_requirements,input.getRequirements(),clusters_listed,stakeholderId);
 
         update_added_accepted_dependencies(requirements_to_update,input.getDependencies(),hash_requirements,clusters_listed,dependencies_to_add,stakeholderId,last_cluster_id);
-
-        update_edited_requirements(requirements_to_update,requirements_to_add,hash_requirements,input.getRequirements(),clusters_listed,stakeholderId);
 
         update_added_requirements(requirements_to_update,input.getRequirements(),requirements_to_add,clusters_listed,dependencies_to_add,result_dependencies,comparer,threshold,stakeholderId,last_cluster_id,type);
 
@@ -955,22 +953,22 @@ public class SemilarServiceImpl implements SemilarService {
         }
     }
 
-    private void update_deleted_requirements(List<Requirement> requirements_to_update, List<Requirement> requirements_to_add, HashMap<String,Requirement> loaded_requirements, List<Requirement> requirements, List<Cluster> clusters, String stakeholderid) throws InternalErrorException {
+    private void update_deleted_edited_requirements(List<Requirement> requirements_to_update, List<Requirement> requirements_to_add, HashMap<String,Requirement> loaded_requirements, List<Requirement> requirements, List<Cluster> clusters, String stakeholderid) throws InternalErrorException {
 
         for (Requirement requirement: requirements) {
-            if (requirement.getStatus() != null && requirement.getStatus().equals("deleted")) {
-                requirement = loaded_requirements.get(requirement.getId());
-                if (requirement != null) {
+            if (requirement.getStatus() != null && (requirement.getStatus().equals("deleted") || requirement.getStatus().equals("edited"))) {
+                Requirement requirement_db = loaded_requirements.get(requirement.getId());
+                if (requirement_db != null) {
                     try {
-                        requirementDAO.deleteRequirementDependencies(requirement, stakeholderid);
+                        requirementDAO.deleteRequirementDependencies(requirement_db, stakeholderid);
                     } catch (SQLException e) {
                         throw new InternalErrorException("Database error: Error while deleting a dependency from database.");
                     } catch (ClassNotFoundException e) {
                         throw new InternalErrorException("Database error: Class not found.");
                     }
 
-                    Cluster aux_cluster = requirement.getCluster();
-                    aux_cluster.removeReq(requirement);
+                    Cluster aux_cluster = requirement_db.getCluster();
+                    aux_cluster.removeReq(requirement_db);
                     if (aux_cluster.getSpecifiedRequirements().size() == 1) {
                         aux_cluster.getReq_older().setStatus("added");
                         aux_cluster.getReq_older().setMaster(false);
@@ -978,13 +976,20 @@ public class SemilarServiceImpl implements SemilarService {
                         requirements_to_add.add(aux_cluster.getReq_older());
                     } else if (aux_cluster.getSpecifiedRequirements().size() != 0) requirements_to_update.add(aux_cluster.getReq_older()); //TODO only do this if the master has changed
                     if (aux_cluster.getSpecifiedRequirements().size() <= 1) clusters.remove(aux_cluster);
-                    loaded_requirements.remove(requirement.getId());
+                    loaded_requirements.remove(requirement_db.getId());
                     try {
-                        requirementDAO.deleteRequirement(requirement, stakeholderid);
+                        requirementDAO.deleteRequirement(requirement_db, stakeholderid);
                     } catch (SQLException e) {
-                        throw new InternalErrorException("Database error: Error while deleting a requirement with id " + requirement.getId() + " from database.");
+                        throw new InternalErrorException("Database error: Error while deleting a requirement with id " + requirement_db.getId() + " from database.");
                     } catch (ClassNotFoundException e) {
                         throw new InternalErrorException("Database error: Class not found.");
+                    }
+
+                    if (requirement.getStatus().equals("edited")) {
+                        //requirements_to_add.add(requirement);
+                        requirement.setStatus("added");
+                        requirement.setMaster(false);
+                        requirement.setCluster(null);
                     }
                 }
             }
@@ -1017,17 +1022,6 @@ public class SemilarServiceImpl implements SemilarService {
         }
     }
 
-    private void update_edited_requirements(List<Requirement> requirements_to_update, List<Requirement> requirements_to_add, HashMap<String,Requirement> loaded_requirements, List<Requirement> requirements, List<Cluster> clusters, String stakeholderid) throws InternalErrorException {
-
-        update_deleted_requirements(requirements_to_update,requirements_to_add,loaded_requirements,requirements,clusters,stakeholderid);
-
-        for (Requirement requirement: requirements) {
-            if (requirement.getStatus() != null && requirement.getStatus().equals("edited")) {
-                requirement.setStatus("added");
-            }
-        }
-    }
-
     private void update_added_requirements(List<Requirement> requirements_to_update, List<Requirement> requirements, List<Requirement> requirements_to_add, List<Cluster> clusters, HashMap<String,Dependency> dependencies_to_add, List<Dependency> result_dependencies, ComparisonBetweenSentences comparer, float threshold, String stakeholderId, long last_cluster_id, boolean type) throws BadRequestException, InternalErrorException{
 
         List<Requirement> requirements_new = new ArrayList<>();
@@ -1053,6 +1047,7 @@ public class SemilarServiceImpl implements SemilarService {
     private void update_all_to_masters(List<Requirement> requirements_to_update, List<Requirement> requirements, List<Cluster> clusters, ComparisonBetweenSentences comparer, float threshold, long last_cluster_id, HashMap<String,Dependency> dependencies_to_add, List<Dependency> result_dependencies, String stakeholderid) throws InternalErrorException {
 
         for (Requirement requirement: requirements) {
+            //TODO comprobar si este if es 100% necesario o es rebundante
             if (requirement.getStatus() != null && (requirement.getStatus().equals("added") || requirement.getStatus().equals("accepted"))) {
                 List<Cluster> clusters_with_superior_threshold = new ArrayList<>();
                 for (Cluster cluster : clusters) {
@@ -1090,8 +1085,8 @@ public class SemilarServiceImpl implements SemilarService {
                     aux_cluster_2.addReq(requirement);
                     if (aux_cluster_2.getReq_older().getId().equals(requirement.getId())) {
                         requirements_to_update.add(req_older);
-                        result_dependencies.add(new Dependency(requirement.getId(), req_older.getId(), "proposed", "duplicates"));
                     }
+                    result_dependencies.add(new Dependency(requirement.getId(), req_older.getId(), "proposed", "duplicates"));
                 } else {
                     Cluster aux_cluster = clusters_with_superior_threshold.get(0);
                     aux_cluster.addReq(requirement);

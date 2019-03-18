@@ -1,0 +1,4 @@
+{"requirements":[
+    {"id":"QM-2","name":"Is the house empty?","created_at":3,"status":"added"}],
+"dependencies":[
+    {"toid":"QM-2","fromid":"QM-1","dependency_type":"duplicates","status":"accepted"}]}
