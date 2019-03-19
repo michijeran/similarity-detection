@@ -1,0 +1,6 @@
+{"requirements":[
+    {"id":"QM-1","name":"Is the house empty?","created_at":4},
+    {"id":"QM-4","name":"Elisa is taller than Josen.","created_at":20},
+    {"id":"QM-2","name":"Is the house empty? Release the boat.","created_at":50}],
+"dependencies":[
+{"toid":"QM-1","fromid":"QM-4","dependency_type":"duplicates","status":"accepted"}]}

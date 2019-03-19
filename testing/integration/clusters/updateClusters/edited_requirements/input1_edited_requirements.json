@@ -1,0 +1,6 @@
+{"requirements":[
+    {"id":"QM-1","name":"Is the house empty?","created_at":4},
+    {"id":"QM-2","name":"Is the house empty? Release the boat.","created_at":50},
+    {"id":"QM-3","name":"Yesterday I talked with Peter.","created_at":40}],
+"dependencies":[
+    {"fromid":"QM-1","toid":"QM-2","dependency_type":"duplicates","status":"accepted"}]}

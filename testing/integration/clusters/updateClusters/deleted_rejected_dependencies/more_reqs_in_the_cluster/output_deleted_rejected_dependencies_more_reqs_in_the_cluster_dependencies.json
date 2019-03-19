@@ -1,5 +1,5 @@
 {"dependencies":[
 {"toid":"QM-1","fromid":"QM-2","status":"accepted"},
 {"toid":"QM-4","fromid":"QM-5","status":"accepted"},
-{"toid":"QM-3","fromid":"QM-2","status":"rejected"},
-{"toid":"QM-5","fromid":"QM-6","status":"rejected"}]}
+{"toid":"QM-5","fromid":"QM-6","status":"rejected"},
+{"toid":"QM-3","fromid":"QM-2","status":"rejected"}]}

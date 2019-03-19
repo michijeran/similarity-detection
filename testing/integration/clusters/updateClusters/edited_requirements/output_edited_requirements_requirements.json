@@ -1,0 +1,4 @@
+{"requirements":[
+    {"cluster":2,"id":"QM-2","master":true},
+    {"cluster":1,"id":"QM-3","master":true},
+    {"cluster":1,"id":"QM-1","master":false}]}

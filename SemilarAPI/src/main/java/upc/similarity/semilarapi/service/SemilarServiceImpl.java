@@ -628,8 +628,6 @@ public class SemilarServiceImpl implements SemilarService {
             throw new InternalErrorException("Database error: Class not found.");
         }
 
-        //TODO si el requisito ya existia en la base de datos, si hacemos update tal cual nos cargamos el conocimiento que ya sabíamos
-
         for (Requirement requirement: input.getRequirements()) {
             if (requirement.getStatus() != null && (requirement.getStatus().equals("accepted") || requirement.getStatus().equals("added"))) {
                 try {
@@ -855,40 +853,29 @@ public class SemilarServiceImpl implements SemilarService {
 
         for (Dependency dependency: dependencies) {
             if (dependency.getDependency_type().equals("duplicates") && ((dependency.getStatus().equals("deleted") || dependency.getStatus().equals("rejected")))) {
-                boolean next = true;
                 try {
-                    try {
-                        requirementDAO.deleteDependency(dependency, stakeholderid);
-                    } catch (SQLException e) {
-                        throw new InternalErrorException("Database error: Error while deleting a dependency from database");
-                    }
-                    /*try {
-                        requirementDAO.saveDependency(dependency, false, stakeholderid);
-                    } catch (SQLException e) {
-                        if (e.getMessage().contains("FOREIGN KEY")) next = false; //TODO hay que avisar al usuario sobre esto?
-                        else throw new InternalErrorException("Database error: Error while adding a new dependency to the database.");
-                    }*/
+                    requirementDAO.deleteDependency(dependency, stakeholderid);
+                } catch (SQLException e) {
+                    throw new InternalErrorException("Database error: Error while deleting a dependency from database");
                 } catch (ClassNotFoundException e) {
                     throw new InternalErrorException("Database error: Class not found.");
                 }
                 dependencies_to_add.put(dependency.getFromid()+dependency.getToid(),dependency);
-                if (next) {
-                    Requirement req1 = requirements.get(dependency.getFromid());
-                    Requirement req2 = requirements.get(dependency.getToid());
-                    if (req1 != null && req2 != null) {
-                        if (req1.getCluster() != null && req2.getCluster() != null) {
-                            if (req1.getCluster().getClusterid() == req2.getCluster().getClusterid()) {
-                                if (!more_than_two_in_cluster(req1.getCluster())) {
-                                    req1.setStatus("added");
-                                    req2.setStatus("added");
-                                    clusters_listed.remove(req1.getCluster());
-                                    req1.setCluster(null);
-                                    req2.setCluster(null);
-                                    requirements_to_add.add(req1);
-                                    requirements_to_add.add(req2);
-                                } else {
-                                    split_and_join_clusters(requirements_to_update, req1, req2, comparer, threshold, last_cluster_id);
-                                }
+                Requirement req1 = requirements.get(dependency.getFromid());
+                Requirement req2 = requirements.get(dependency.getToid());
+                if (req1 != null && req2 != null) {
+                    if (req1.getCluster() != null && req2.getCluster() != null) {
+                        if (req1.getCluster().getClusterid() == req2.getCluster().getClusterid()) {
+                            if (!more_than_two_in_cluster(req1.getCluster())) {
+                                req1.setStatus("added");
+                                req2.setStatus("added");
+                                clusters_listed.remove(req1.getCluster());
+                                req1.setCluster(null);
+                                req2.setCluster(null);
+                                requirements_to_add.add(req1);
+                                requirements_to_add.add(req2);
+                            } else {
+                                split_and_join_clusters(requirements_to_update, req1, req2, comparer, threshold, last_cluster_id);
                             }
                         }
                     }
@@ -1040,13 +1027,96 @@ public class SemilarServiceImpl implements SemilarService {
 
         requirements_to_add.addAll(requirements_new);
 
-        if (type) update_all_to_all();
+        if (type) update_all_to_all(requirements_to_update,requirements_to_add,clusters,comparer,threshold,last_cluster_id,dependencies_to_add,result_dependencies,stakeholderId);
         else update_all_to_masters(requirements_to_update,requirements_to_add,clusters,comparer,threshold,last_cluster_id,dependencies_to_add,result_dependencies,stakeholderId);
 
     }
 
-    private void update_all_to_all() {
-        //TODO implement this
+    private void update_all_to_all(List<Requirement> requirements_to_update, List<Requirement> requirements, List<Cluster> clusters, ComparisonBetweenSentences comparer, float threshold, long last_cluster_id, HashMap<String,Dependency> dependencies_to_add, List<Dependency> result_dependencies, String stakeholderid) throws InternalErrorException {
+        for (Requirement requirement: requirements) {
+            //TODO comprobar si este if es 100% necesario o es rebundante
+            if (requirement.getStatus() != null && (requirement.getStatus().equals("added"))) {
+                List<Cluster> clusters_with_superior_threshold = new ArrayList<>();
+                for (Cluster cluster : clusters) {
+                    boolean found = false;
+                    for (int j = 0; (!found) && (j < cluster.getSpecifiedRequirements().size()); ++j) {
+                        Requirement cluster_requirement = cluster.getSpecifiedRequirements().get(j);
+                        Dependency aux_db = null;
+                        String id1 = requirement.getId();
+                        String id2 = cluster_requirement.getId();
+                        try {
+                            aux_db = requirementDAO.getDependency(id1, id2, stakeholderid);
+                        } catch (SQLException e) {
+                            if (!e.getMessage().contains("The dependency does not exist in the database"))
+                                throw new InternalErrorException("Database error: Error while getting a dependency.");
+                            aux_db = dependencies_to_add.get(id1 + id2);
+                            if (aux_db == null) aux_db = dependencies_to_add.get(id2 + id1);
+                        } catch (ClassNotFoundException e) {
+                            throw new InternalErrorException("Database error: Class not found.");
+                        }
+                        //only continue if the dependency does not exist or it is accepted or added
+                        if (aux_db != null && (aux_db.getStatus().equals("accepted") || aux_db.getStatus().equals("added"))) {
+                            clusters_with_superior_threshold.add(cluster);
+                            found = true;
+                        } else if (aux_db == null) {
+                            Dependency aux_dep = comparer.compare_two_requirements_dep(requirement,cluster_requirement);
+                            if (aux_dep != null && aux_dep.getDependency_score() >= threshold) {
+                                clusters_with_superior_threshold.add(cluster);
+                                found = true;
+                            }
+                        }
+                    }
+                }
+                requirements_to_update.add(requirement);
+                if (clusters_with_superior_threshold.size() == 0) {
+                    Cluster aux_cluster = new Cluster(last_cluster_id);
+                    ++last_cluster_id;
+                    aux_cluster.addReq(requirement);
+                    clusters.add(aux_cluster);
+                } else if (clusters_with_superior_threshold.size() == 1) {
+                    Cluster aux_cluster_2 = clusters_with_superior_threshold.get(0);
+                    Requirement req_older = aux_cluster_2.getReq_older();
+                    aux_cluster_2.addReq(requirement);
+                    if (aux_cluster_2.getReq_older().getId().equals(requirement.getId())) {
+                        requirements_to_update.add(req_older);
+                        result_dependencies.add(new Dependency(requirement.getId(), req_older.getId(), "proposed", "duplicates"));
+                    }
+                    else result_dependencies.add(new Dependency(req_older.getId(),requirement.getId(), "proposed", "duplicates"));
+
+                } else {
+                    List<String> reqs_older = new ArrayList<>();
+                    Cluster aux_cluster = clusters_with_superior_threshold.get(0);
+                    Requirement old_master = aux_cluster.getReq_older();
+                    reqs_older.add(old_master.getId());
+                    aux_cluster.addReq(requirement);
+                    if (aux_cluster.getReq_older().getId().equals(requirement.getId())) {
+                        requirements_to_update.add(old_master);
+                        old_master = requirement;
+                    }
+                    for (int i = 1; i < clusters_with_superior_threshold.size(); ++i) {
+                        Cluster aux_cluster2 = clusters_with_superior_threshold.get(i);
+                        Requirement aux_master = aux_cluster2.getReq_older();
+                        reqs_older.add(aux_master.getId());
+                        merge_clusters_update_reqs(aux_cluster,aux_cluster2,requirements_to_update);
+                        clusters.remove(aux_cluster2);
+                        if (aux_cluster.getReq_older().getId().equals(aux_master.getId())) {
+                            requirements_to_update.add(old_master);
+                            old_master = aux_master;
+                        }
+                    }
+                    if (aux_cluster.getReq_older().getId().equals(requirement.getId())) {
+                        for (String req_older : reqs_older) {
+                            result_dependencies.add(new Dependency(requirement.getId(),req_older,"proposed", "duplicates"));
+                        }
+                    } else {
+                        result_dependencies.add(new Dependency(aux_cluster.getReq_older().getId(),requirement.getId(),"proposed", "duplicates"));
+                        for (String req_older : reqs_older) {
+                            if(!aux_cluster.getReq_older().getId().equals(req_older)) result_dependencies.add(new Dependency(aux_cluster.getReq_older().getId(), req_older, "proposed", "duplicates"));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void update_all_to_masters(List<Requirement> requirements_to_update, List<Requirement> requirements, List<Cluster> clusters, ComparisonBetweenSentences comparer, float threshold, long last_cluster_id, HashMap<String,Dependency> dependencies_to_add, List<Dependency> result_dependencies, String stakeholderid) throws InternalErrorException {
