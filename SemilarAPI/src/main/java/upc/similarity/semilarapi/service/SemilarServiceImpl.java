@@ -612,7 +612,7 @@ public class SemilarServiceImpl implements SemilarService {
         show_time("start computing");
         ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
 
-        update_deleted_rejected_dependencies(requirements_to_update,requirements_to_add,input.getDependencies(),clusters_listed,hash_requirements,comparer,threshold, stakeholderId,last_cluster_id);
+        update_deleted_rejected_dependencies(dependencies_to_add,requirements_to_update,requirements_to_add,input.getDependencies(),clusters_listed,hash_requirements,comparer,threshold, stakeholderId,last_cluster_id);
 
         update_deleted_edited_requirements(requirements_to_update,requirements_to_add,hash_requirements,input.getRequirements(),clusters_listed,stakeholderId);
 
@@ -688,9 +688,11 @@ public class SemilarServiceImpl implements SemilarService {
             Map.Entry pair = (Map.Entry)it.next();
             Dependency dependency = (Dependency) pair.getValue();
             try {
-                requirementDAO.saveDependency(dependency, true, stakeholderId);
+                if (dependency.getStatus().equals("added") || dependency.getStatus().equals("accepted")) requirementDAO.saveDependency(dependency, true, stakeholderId);
+                else if (dependency.getStatus().equals("rejected") || dependency.getStatus().equals("deleted")) requirementDAO.saveDependency(dependency, false, stakeholderId);
             } catch (SQLException e) {
-                throw new BadRequestException("Database exception: Error while saving a dependency (fromid:" + dependency.getFromid() + "toid:" + dependency.getToid() + ") to the database.");
+                //TODO avisar de esto al usuario? que ha metido una dependencia entre dos requisitos que no existen
+                if (!e.getMessage().contains("FOREIGN KEY")) throw new BadRequestException("Database exception: Error while saving a dependency (fromid:" + dependency.getFromid() + ", toid:" + dependency.getToid() + ") to the database.");
             } catch (ClassNotFoundException e) {
                 throw new InternalErrorException("Database error: Class not found.");
             }
@@ -849,7 +851,7 @@ public class SemilarServiceImpl implements SemilarService {
     auxiliary operations
      */
 
-    private void update_deleted_rejected_dependencies(List<Requirement> requirements_to_update, List<Requirement> requirements_to_add, List<Dependency> dependencies, List<Cluster> clusters_listed, HashMap<String,Requirement> requirements, ComparisonBetweenSentences comparer, float threshold, String stakeholderid, long last_cluster_id) throws InternalErrorException, BadRequestException {
+    private void update_deleted_rejected_dependencies(HashMap<String,Dependency> dependencies_to_add, List<Requirement> requirements_to_update, List<Requirement> requirements_to_add, List<Dependency> dependencies, List<Cluster> clusters_listed, HashMap<String,Requirement> requirements, ComparisonBetweenSentences comparer, float threshold, String stakeholderid, long last_cluster_id) throws InternalErrorException, BadRequestException {
 
         for (Dependency dependency: dependencies) {
             if (dependency.getDependency_type().equals("duplicates") && ((dependency.getStatus().equals("deleted") || dependency.getStatus().equals("rejected")))) {
@@ -860,30 +862,33 @@ public class SemilarServiceImpl implements SemilarService {
                     } catch (SQLException e) {
                         throw new InternalErrorException("Database error: Error while deleting a dependency from database");
                     }
-                    try {
+                    /*try {
                         requirementDAO.saveDependency(dependency, false, stakeholderid);
                     } catch (SQLException e) {
                         if (e.getMessage().contains("FOREIGN KEY")) next = false; //TODO hay que avisar al usuario sobre esto?
                         else throw new InternalErrorException("Database error: Error while adding a new dependency to the database.");
-                    }
+                    }*/
                 } catch (ClassNotFoundException e) {
                     throw new InternalErrorException("Database error: Class not found.");
                 }
+                dependencies_to_add.put(dependency.getFromid()+dependency.getToid(),dependency);
                 if (next) {
                     Requirement req1 = requirements.get(dependency.getFromid());
                     Requirement req2 = requirements.get(dependency.getToid());
-                    if (req1.getCluster() != null && req2.getCluster() != null) {
-                        if (req1.getCluster().getClusterid() == req2.getCluster().getClusterid()) {
-                            if (!more_than_two_in_cluster(req1.getCluster())) {
-                                req1.setStatus("added");
-                                req2.setStatus("added");
-                                clusters_listed.remove(req1.getCluster());
-                                req1.setCluster(null);
-                                req2.setCluster(null);
-                                requirements_to_add.add(req1);
-                                requirements_to_add.add(req2);
-                            } else {
-                                split_and_join_clusters(requirements_to_update,req1, req2, comparer, threshold, last_cluster_id);
+                    if (req1 != null && req2 != null) {
+                        if (req1.getCluster() != null && req2.getCluster() != null) {
+                            if (req1.getCluster().getClusterid() == req2.getCluster().getClusterid()) {
+                                if (!more_than_two_in_cluster(req1.getCluster())) {
+                                    req1.setStatus("added");
+                                    req2.setStatus("added");
+                                    clusters_listed.remove(req1.getCluster());
+                                    req1.setCluster(null);
+                                    req2.setCluster(null);
+                                    requirements_to_add.add(req1);
+                                    requirements_to_add.add(req2);
+                                } else {
+                                    split_and_join_clusters(requirements_to_update, req1, req2, comparer, threshold, last_cluster_id);
+                                }
                             }
                         }
                     }
@@ -1027,7 +1032,7 @@ public class SemilarServiceImpl implements SemilarService {
         List<Requirement> requirements_new = new ArrayList<>();
 
         for (Requirement requirement: requirements) {
-            if (requirement.getStatus() != null && (requirement.getStatus().equals("added") || requirement.getStatus().equals("accepted"))) {
+            if (requirement.getStatus() != null && (requirement.getStatus().equals("added"))) {
                 requirement.compute_sentence();
                 requirements_new.add(requirement);
             }
@@ -1048,7 +1053,7 @@ public class SemilarServiceImpl implements SemilarService {
 
         for (Requirement requirement: requirements) {
             //TODO comprobar si este if es 100% necesario o es rebundante
-            if (requirement.getStatus() != null && (requirement.getStatus().equals("added") || requirement.getStatus().equals("accepted"))) {
+            if (requirement.getStatus() != null && (requirement.getStatus().equals("added"))) {
                 List<Cluster> clusters_with_superior_threshold = new ArrayList<>();
                 for (Cluster cluster : clusters) {
                     Dependency aux_db = null;
@@ -1085,25 +1090,39 @@ public class SemilarServiceImpl implements SemilarService {
                     aux_cluster_2.addReq(requirement);
                     if (aux_cluster_2.getReq_older().getId().equals(requirement.getId())) {
                         requirements_to_update.add(req_older);
+                        result_dependencies.add(new Dependency(requirement.getId(), req_older.getId(), "proposed", "duplicates"));
                     }
-                    result_dependencies.add(new Dependency(requirement.getId(), req_older.getId(), "proposed", "duplicates"));
+                    else result_dependencies.add(new Dependency(req_older.getId(),requirement.getId(), "proposed", "duplicates"));
+
                 } else {
-                    Cluster aux_cluster = clusters_with_superior_threshold.get(0);
-                    aux_cluster.addReq(requirement);
                     List<String> reqs_older = new ArrayList<>();
+                    Cluster aux_cluster = clusters_with_superior_threshold.get(0);
+                    Requirement old_master = aux_cluster.getReq_older();
+                    reqs_older.add(old_master.getId());
+                    aux_cluster.addReq(requirement);
+                    if (aux_cluster.getReq_older().getId().equals(requirement.getId())) {
+                        requirements_to_update.add(old_master);
+                        old_master = requirement;
+                    }
                     for (int i = 1; i < clusters_with_superior_threshold.size(); ++i) {
                         Cluster aux_cluster2 = clusters_with_superior_threshold.get(i);
-                        reqs_older.add(aux_cluster2.getReq_older().getId());
-                        merge_clusters_update_reqs(aux_cluster, aux_cluster2,requirements_to_update);
+                        Requirement aux_master = aux_cluster2.getReq_older();
+                        reqs_older.add(aux_master.getId());
+                        merge_clusters_update_reqs(aux_cluster,aux_cluster2,requirements_to_update);
                         clusters.remove(aux_cluster2);
+                        if (aux_cluster.getReq_older().getId().equals(aux_master.getId())) {
+                            requirements_to_update.add(old_master);
+                            old_master = aux_master;
+                        }
                     }
                     if (aux_cluster.getReq_older().getId().equals(requirement.getId())) {
                         for (String req_older : reqs_older) {
-                            result_dependencies.add(new Dependency(requirement.getId(), req_older, "proposed", "duplicates"));
+                            result_dependencies.add(new Dependency(requirement.getId(),req_older,"proposed", "duplicates"));
                         }
                     } else {
+                        result_dependencies.add(new Dependency(aux_cluster.getReq_older().getId(),requirement.getId(),"proposed", "duplicates"));
                         for (String req_older : reqs_older) {
-                            result_dependencies.add(new Dependency(aux_cluster.getReq_older().getId(), req_older, "proposed", "duplicates"));
+                            if(!aux_cluster.getReq_older().getId().equals(req_older)) result_dependencies.add(new Dependency(aux_cluster.getReq_older().getId(), req_older, "proposed", "duplicates"));
                         }
                     }
                 }

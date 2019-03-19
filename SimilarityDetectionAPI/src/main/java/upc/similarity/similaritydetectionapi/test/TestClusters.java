@@ -356,6 +356,84 @@ public class TestClusters extends ControllerTest {
         finished = false;
     }
 
+    @Test
+    public void jUpdateClusters_added_requirements_masters_not_duplicate() throws InterruptedException {
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/InitializeClusters?stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/not_duplicate/input1_added_requirements_masters_not_duplicate.json"));
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+
+        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/UpdateClusters?type=false&stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/not_duplicate/input2_added_requirements_masters_not_duplicate.json"));
+        assertEquals(200,first_result.httpStatus);
+        while(!finished) {Thread.sleep(2000);}
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/not_duplicate/output_added_requirements_masters_not_duplicate.json"),second_result.result);
+        assertEquals(create_json_info(first_result.id,"updateClusters","true"),second_result.result_info);
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/not_duplicate/output_added_requirements_masters_not_duplicate_dependencies.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetDependencies?stakeholderId=Test"));
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/not_duplicate/output_added_requirements_masters_not_duplicate_requirements.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetRequirements?stakeholderId=Test"));
+        finished = false;
+    }
+
+    @Test
+    public void kUpdateClusters_added_requirements_masters_duplicate_one_cluster() throws InterruptedException {
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/InitializeClusters?stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/duplicate_one_cluster/input1_added_requirements_masters_duplicate_one_cluster.json"));
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+
+        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/UpdateClusters?type=false&stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/duplicate_one_cluster/input2_added_requirements_masters_duplicate_one_cluster.json"));
+        assertEquals(200,first_result.httpStatus);
+        while(!finished) {Thread.sleep(2000);}
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/duplicate_one_cluster/output_added_requirements_masters_duplicate_one_cluster.json"),second_result.result);
+        assertEquals(create_json_info(first_result.id,"updateClusters","true"),second_result.result_info);
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/duplicate_one_cluster/output_added_requirements_masters_duplicate_one_cluster_dependencies.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetDependencies?stakeholderId=Test"));
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/duplicate_one_cluster/output_added_requirements_masters_duplicate_one_cluster_requirements.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetRequirements?stakeholderId=Test"));
+        finished = false;
+    }
+
+    @Test
+    public void lUpdateClusters_added_requirements_masters_duplicate_multiple_cluster() throws InterruptedException {
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/InitializeClusters?stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/duplicate_multiple_cluster/input1_added_requirements_masters_duplicate_multiple_cluster.json"));
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+
+        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/UpdateClusters?type=false&stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/duplicate_multiple_cluster/input2_added_requirements_masters_duplicate_multiple_cluster.json"));
+        assertEquals(200,first_result.httpStatus);
+        while(!finished) {Thread.sleep(2000);}
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/duplicate_multiple_cluster/output_added_requirements_masters_duplicate_multiple_cluster.json"),second_result.result);
+        assertEquals(create_json_info(first_result.id,"updateClusters","true"),second_result.result_info);
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/duplicate_multiple_cluster/output_added_requirements_masters_duplicate_multiple_cluster_dependencies.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetDependencies?stakeholderId=Test"));
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/duplicate_multiple_cluster/output_added_requirements_masters_duplicate_multiple_cluster_requirements.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetRequirements?stakeholderId=Test"));
+        finished = false;
+    }
+
+    @Test
+    public void mUpdateClusters_added_requirements_masters_database_table() throws InterruptedException {
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/InitializeClusters?stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/database_table/input1_added_requirements_masters_database_table.json"));
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+
+        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/UpdateClusters?type=false&stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/updateClusters/added_requirements/masters/database_table/input2_added_requirements_masters_database_table.json"));
+        assertEquals(200,first_result.httpStatus);
+        while(!finished) {Thread.sleep(2000);}
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/database_table/output_added_requirements_masters_database_table.json"),second_result.result);
+        assertEquals(create_json_info(first_result.id,"updateClusters","true"),second_result.result_info);
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/database_table/output_added_requirements_masters_database_table_dependencies.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetDependencies?stakeholderId=Test"));
+        assertEquals(read_file(path+"/updateClusters/added_requirements/masters/database_table/output_added_requirements_masters_database_table_requirements.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetRequirements?stakeholderId=Test"));
+        finished = false;
+    }
+
+
+
 
 
 
@@ -407,11 +485,6 @@ public class TestClusters extends ControllerTest {
         return aux.toString();
     }
 
-    /*public static void setResult(String result, String result_info) {
-        second_result = new Second_Result(result_info,new JSONObject(result).toString());
-        finished = true;
-    }*/
-
     private First_Result connect_to_component(String url, String json) {
 
         HttpClient httpclient = HttpClients.createDefault();
@@ -428,7 +501,7 @@ public class TestClusters extends ControllerTest {
         } catch (IOException e) {
             System.out.println("Error conecting with server");
         }
-        System.out.println(json_response);
+        //System.out.println(json_response);
         JSONObject aux = new JSONObject(json_response);
         String id = aux.getString("id");
         return new First_Result(httpStatus,id);

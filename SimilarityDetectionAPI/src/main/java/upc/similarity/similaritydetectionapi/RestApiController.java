@@ -185,7 +185,7 @@ public class RestApiController {
     public ResponseEntity<?> testing(@RequestParam("result") MultipartFile file,
                                @RequestParam("info") JSONObject json) {
 
-        System.out.println("Enter");
+        //System.out.println("Enter");
         try {
             InputStream reader = file.getInputStream();
 
