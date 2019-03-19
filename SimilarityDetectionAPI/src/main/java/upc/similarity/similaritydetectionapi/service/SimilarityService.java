@@ -30,5 +30,8 @@ public interface SimilarityService {
     // DB
     public Result_id addRequirements(String stakeholderId, Requirements input, String url) throws ComponentException, BadRequestException, NotFoundException;
 
+    //Auxiliary
+    public Result_id resetStakeholder(String stakeholderId, String url) throws InternalErrorException, BadRequestException, NotFoundException;
+
     void clearDB() throws SemilarException, BadRequestException, NotFoundException;
 }

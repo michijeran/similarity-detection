@@ -138,6 +138,21 @@ public class RestApiController {
         }
     }
 
+    @RequestMapping(value = "/upc/Semilar/resetStakeholder", method = RequestMethod.POST)
+    public ResponseEntity<?> resetStakeholder(@RequestParam("stakeholderId") String stakeholderId) {
+        try {
+            semilarService.resetStakeholder(stakeholderId);
+            return new ResponseEntity<>(null,HttpStatus.OK);
+        } catch (InternalErrorException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(510));
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(e.getStatus()));
+        }
+    }
+
+
 
     //Database
     @RequestMapping(value = "/upc/Semilar/Preprocess", method = RequestMethod.POST)

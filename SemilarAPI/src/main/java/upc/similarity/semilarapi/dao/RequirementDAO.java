@@ -19,7 +19,7 @@ public interface RequirementDAO {
 
     public Dependency getDependency(String fromid, String toid, String stakeholderid) throws SQLException, ClassNotFoundException;
 
-    public void updateThreshold(String stakeholder, float threshold) throws SQLException, ClassNotFoundException;
+    public void updateThreshold(String stakeholderid, float threshold) throws SQLException, ClassNotFoundException;
 
     public void updateRequirementCluster(Requirement requirement, String stakeholderid) throws SQLException, ClassNotFoundException;
 
@@ -34,6 +34,8 @@ public interface RequirementDAO {
     public void deleteRequirementDependencies(Requirement requirement, String stakeholderid) throws SQLException, ClassNotFoundException;
 
     public void clearDB() throws SQLException, ClassNotFoundException;
+
+    public void resetStakeholder(String stakeholderid) throws SQLException, ClassNotFoundException;
 
     public float getThreshold(String stakeholderid) throws SQLException, ClassNotFoundException;
 

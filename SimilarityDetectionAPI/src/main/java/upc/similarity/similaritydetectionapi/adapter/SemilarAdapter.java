@@ -117,6 +117,12 @@ public class SemilarAdapter extends ComponentAdapter{
         connection_component(URL + "modifyThreshold?stakeholderId=" + stakeholderId + "&threshold=" + threshold,null);
     }
 
+    @Override
+    public void resetStakeholder(String stakeholderId) throws ComponentException, BadRequestException {
+
+        connection_component(URL + "resetStakeholder?stakeholderId=" + stakeholderId,null);
+    }
+
     public void processRequirements(String stakeholderId, List<Requirement> requirements) throws ComponentException, BadRequestException {
         //TODO move this part to abstract class
 
@@ -177,7 +183,7 @@ public class SemilarAdapter extends ComponentAdapter{
             String message = result.getString("message");
             switch (status) {
                 case 412: throw new BadRequestException(message);
-                default: throw new SemilarException("Semilar component is not working" + message);
+                default: throw new SemilarException("Semilar component is not working. " + message);
             }
         }
     }

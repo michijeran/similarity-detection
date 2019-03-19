@@ -42,6 +42,8 @@ public abstract class ComponentAdapter {
 
     public abstract void modifyThreshold(String stakeholderId, float threshold) throws ComponentException, BadRequestException;
 
+    public abstract void resetStakeholder(String stakeholderId) throws ComponentException, BadRequestException;
+
     //auxiliary operations
     protected void connection_component(String URL, JSONObject json) throws ComponentException, BadRequestException {
 

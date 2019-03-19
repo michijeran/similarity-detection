@@ -2,6 +2,7 @@ package upc.similarity.similaritydetectionapi.test;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -23,7 +24,7 @@ import java.io.IOException;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ControllerTest {
 
-    private static class First_Result {
+    protected static class First_Result {
         int httpStatus;
         String id;
         First_Result(int httpStatus, String id) {
@@ -181,7 +182,23 @@ public class ControllerTest {
     auxiliary methods
      */
 
-    private String read_file(String path) {
+    protected String connect_to_component_simple(String url) {
+        HttpClient httpclient = HttpClients.createDefault();
+        HttpGet httpget = new HttpGet(url);
+        String json_response = "";
+
+        //Execute and get the response.
+        try {
+            HttpResponse response = httpclient.execute(httpget);
+            json_response = EntityUtils.toString(response.getEntity());
+        } catch (IOException e) {
+            System.out.println("Error conecting with server");
+        }
+        JSONObject aux = new JSONObject(json_response);
+        return aux.toString();
+    }
+
+    protected String read_file(String path) {
         String result = "";
         String line = "";
         try {
@@ -203,11 +220,11 @@ public class ControllerTest {
         finished = true;
     }
 
-    private First_Result connect_to_component(String url, String json) {
+    protected First_Result connect_to_component(String url, String json) {
 
         HttpClient httpclient = HttpClients.createDefault();
         HttpPost httppost = new HttpPost(url);
-        httppost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+        if (json != null) httppost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
         int httpStatus = 500;
         String json_response = "";
 
@@ -225,7 +242,7 @@ public class ControllerTest {
         return new First_Result(httpStatus,id);
     }
 
-    private String create_json_info(String id, String operation, String success) {
+    protected String create_json_info(String id, String operation, String success) {
         JSONObject result = new JSONObject();
         result.put("id",id);
         result.put("success",success);

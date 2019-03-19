@@ -32,6 +32,9 @@ public interface SemilarService {
 
     public void modifyThreshold(String stakeholderId, float threshold) throws InternalErrorException, BadRequestException;
 
+    public void resetStakeholder(String stakeholderId) throws InternalErrorException, BadRequestException;
+
+
 
     //Database
     public void savePreprocessed(String stakeholderId, List<Requirement> reqs) throws InternalErrorException;

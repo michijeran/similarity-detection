@@ -486,6 +486,46 @@ public class SimilarityServiceImpl implements SimilarityService {
         return id;
     }
 
+    public Result_id resetStakeholder(String stakeholderId, String url) throws InternalErrorException, BadRequestException, NotFoundException {
+
+        String component = "Semilar";
+        Result_id id = get_id();
+
+        //Create file to save result
+        File file = create_file(path+id.getId());
+
+        //New thread
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InputStream fis = null;
+                String success = "false";
+                try {
+                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
+                    componentAdapter.resetStakeholder(stakeholderId);
+                    String result = "{\"result\":\"Success!\"}";
+                    fis = new ByteArrayInputStream(result.getBytes());
+                    success = "true";
+                } catch (ComponentException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
+                } catch (BadRequestException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
+                }
+                finally {
+                    update_client(fis,url,id.getId(),success,"resetOrganization");
+                    try {
+                        delete_file(file);
+                    } catch (InternalErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        });
+
+        thread.start();
+        return id;
+    }
+
 
     //Auxiliary operations
 
@@ -510,6 +550,11 @@ public class SimilarityServiceImpl implements SimilarityService {
 
         return result;
     }*/
+
+
+    /*
+    auxiliary operations
+     */
 
     private Result_id get_id() {
         Random rand = new Random();

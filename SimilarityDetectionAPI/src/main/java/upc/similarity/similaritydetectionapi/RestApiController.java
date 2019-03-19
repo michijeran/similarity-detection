@@ -318,6 +318,25 @@ public class RestApiController {
 
     }
 
+    @CrossOrigin
+    @RequestMapping(value = "/ResetOrganization", method = RequestMethod.POST)
+    @ApiOperation(value = "ResetOrganization")
+    public ResponseEntity<?> ResetOrganization(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
+                                                @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
+
+        try {
+            url_ok(url);
+            return new ResponseEntity<>(similarityService.resetStakeholder(stakeholderId,url),HttpStatus.OK);
+        } catch (BadRequestException e) {
+            return getResponseBadRequest(e);
+        } catch (NotFoundException e) {
+            return getResponseNotFound(e);
+        } catch (InternalErrorException e) {
+            return getInternalError(e);
+        }
+
+    }
+
     /*
     auxiliary operations
      */

@@ -1,0 +1,7 @@
+{"dependencies":[
+{"toid":"QM-1","dependency_type":"duplicates","fromid":"QM-7","status":"proposed"},
+{"toid":"QM-3","dependency_type":"duplicates","fromid":"QM-7","status":"proposed"},
+{"toid":"QM-4","dependency_type":"duplicates","fromid":"QM-7","status":"proposed"},
+{"toid":"QM-8","dependency_type":"duplicates","fromid":"QM-7","status":"proposed"},
+{"toid":"QM-5","dependency_type":"duplicates","fromid":"QM-7","status":"proposed"},
+{"toid":"QM-6","dependency_type":"duplicates","fromid":"QM-7","status":"proposed"}]}

@@ -1,6 +1,7 @@
 package upc.similarity.semilarapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.json.JSONObject;
 import semilar.data.Sentence;
 import semilar.tools.preprocessing.SentencePreprocessor;
 
@@ -309,6 +310,16 @@ public class Requirement implements Serializable {
     public boolean isOK() {
         if (id == null) return false;
         else return true;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id",id);
+        json.put("created_at",created_at);
+        json.put("status",status);
+        json.put("clusterId",clusterId);
+        json.put("master", master);
+        return json;
     }
 
     @Override

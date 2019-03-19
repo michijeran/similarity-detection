@@ -1,0 +1,9 @@
+{"requirements":[
+    {"id":"QM-1","name":"Elisa is taller than Josen.","created_at":3},
+    {"id":"QM-2","name":"Is the house empty? Release the boat.","created_at":5},
+    {"id":"QM-3","name":"Elisa is taller than Josen.","created_at":9},
+    {"id":"QM-4","name":"Elisa is taller than Josen.","created_at":4},
+    {"id":"QM-5","name":"Is the house empty? Release the boat.","created_at":7},
+    {"id":"QM-6","name":"Is the house empty? Release the boat.","created_at":4}],
+"dependencies":[
+    {"toid":"QM-1","dependency_type":"duplicates","fromid":"QM-2","status":"accepted"}]}

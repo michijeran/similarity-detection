@@ -362,7 +362,7 @@ public class SQLiteDAO implements RequirementDAO {
         }
     }
 
-    /*public String getRequirements_JSON(String stakeholderid) throws SQLException, ClassNotFoundException {
+    public String getRequirements_JSON(String stakeholderid) throws SQLException, ClassNotFoundException {
         if (c == null) c = getConnection();
 
         PreparedStatement ps;
@@ -390,7 +390,7 @@ public class SQLiteDAO implements RequirementDAO {
         } finally {
             //c.close();
         }
-    }*/
+    }
 
     @Override
     public List<Dependency> getDependencies(String stakeholderid) throws SQLException, ClassNotFoundException {
@@ -504,6 +504,24 @@ public class SQLiteDAO implements RequirementDAO {
             //c.close();
         }
     }
+
+    @Override
+    public void resetStakeholder(String stakeholderid) throws SQLException, ClassNotFoundException {
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+        try {
+            ps = c.prepareStatement("DELETE FROM dependencies WHERE stakeholderid = ?");
+            ps.setString(1,stakeholderid);
+            ps.execute();
+            ps = c.prepareStatement("DELETE FROM prepocessed WHERE stakeholderid = ?");
+            ps.setString(1,stakeholderid);
+            ps.execute();
+
+        } finally {
+            //c.close();
+        }
+    }
+
 
     // Conversion Sentence <=> JSON
 

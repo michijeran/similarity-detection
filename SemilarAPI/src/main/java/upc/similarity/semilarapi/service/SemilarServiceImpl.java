@@ -283,6 +283,8 @@ public class SemilarServiceImpl implements SemilarService {
             throw new InternalErrorException("Database error: Class not found.");
         }
 
+
+
         try {
             requirementDAO.updateThreshold(stakeholderId, threshold);
         } catch (SQLException e) {
@@ -290,6 +292,19 @@ public class SemilarServiceImpl implements SemilarService {
         } catch (ClassNotFoundException e) {
             throw new InternalErrorException("Database error: Class not found.");
         }
+    }
+
+    @Override
+    public void resetStakeholder(String stakeholderId) throws InternalErrorException, BadRequestException {
+
+        try {
+            requirementDAO.resetStakeholder(stakeholderId);
+        } catch (SQLException e) {
+            throw new InternalErrorException("Database exception: Error while deleting stakeholder's tables.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+
     }
 
     @Override
