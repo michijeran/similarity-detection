@@ -125,9 +125,12 @@ public class RestApiController {
 
     @RequestMapping(value = "/upc/Semilar/modifyThreshold", method = RequestMethod.POST)
     public ResponseEntity<?> modifyThreshold(@RequestParam("stakeholderId") String stakeholderId,
+                                             @RequestParam("compare") String compare,
+                                             @RequestParam("filename") String filename,
+                                             @RequestParam("type") boolean type,
                                          @RequestParam("threshold") float threshold) {
         try {
-            semilarService.modifyThreshold(stakeholderId,threshold);
+            semilarService.modifyThreshold(type,filename,compare,stakeholderId,threshold);
             return new ResponseEntity<>(null,HttpStatus.OK);
         } catch (InternalErrorException e) {
             e.printStackTrace();

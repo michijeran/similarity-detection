@@ -112,9 +112,9 @@ public class SemilarAdapter extends ComponentAdapter{
     }
 
     @Override
-    public void modifyThreshold(String stakeholderId, float threshold) throws ComponentException, BadRequestException {
+    public void modifyThreshold(boolean type, String filename, String compare, String stakeholderId, float threshold) throws ComponentException, BadRequestException {
 
-        connection_component(URL + "modifyThreshold?stakeholderId=" + stakeholderId + "&threshold=" + threshold,null);
+        connection_component(URL + "modifyThreshold?stakeholderId=" + stakeholderId + "&threshold=" + threshold + "&compare=" + compare + "&filename=" + filename + "&type=" + type,null);
     }
 
     @Override

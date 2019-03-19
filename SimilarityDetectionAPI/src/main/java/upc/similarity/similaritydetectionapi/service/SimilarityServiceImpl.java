@@ -446,7 +446,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id modifyThreshold(String stakeholderId, float threshold, String url) throws InternalErrorException {
+    public Result_id modifyThreshold(boolean type, String compare, String stakeholderId, float threshold, String url) throws InternalErrorException {
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -462,7 +462,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.modifyThreshold(stakeholderId,threshold);
+                    componentAdapter.modifyThreshold(type,id.getId(),compare,stakeholderId,threshold);
                     String result = "{\"result\":\"Success!\"}";
                     fis = new ByteArrayInputStream(result.getBytes());
                     success = "true";
@@ -472,7 +472,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                     fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
                 }
                 finally {
-                    update_client(fis,url,id.getId(),success,"modifyTheshold");
+                    update_client(fis,url,id.getId(),success,"modifyThreshold");
                     try {
                         delete_file(file);
                     } catch (InternalErrorException e) {

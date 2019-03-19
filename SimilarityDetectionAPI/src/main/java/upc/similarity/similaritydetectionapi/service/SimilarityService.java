@@ -25,7 +25,7 @@ public interface SimilarityService {
 
     public Result_id computeClusters(boolean type, String stakeholderId, String compare, String url) throws BadRequestException, InternalErrorException, NotFoundException;
 
-    public Result_id modifyThreshold(String stakeholderId, float threshold, String url) throws InternalErrorException;
+    public Result_id modifyThreshold(boolean type, String compare, String stakeholderId, float threshold, String url) throws InternalErrorException;
 
     // DB
     public Result_id addRequirements(String stakeholderId, Requirements input, String url) throws ComponentException, BadRequestException, NotFoundException;

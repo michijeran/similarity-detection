@@ -50,12 +50,33 @@ public class TestAuxiliaryOperations extends ControllerTest {
         assertEquals(200,first_result.httpStatus);
         while(!finished) {Thread.sleep(2000);}
         assertEquals(create_json_info(first_result.id,"modifyTheshold","true"),second_result.result_info);
-        assertEquals(read_file(path+"/modifyThreshold/output_modifyThreshold_simple_stakeholders.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetStakeholders"));
+        assertEquals(read_file(path+"/modifyThreshold/simple/output_modifyThreshold_simple_stakeholders.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetStakeholders"));
         finished = false;
     }
 
     @Test
-    public void bResetOrganization() throws InterruptedException {
+    public void ModifyThreshold_recompute() throws InterruptedException {
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/InitializeClusters?stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/modifyThreshold/recompute/input_auxiliary_modifyThreshold_recompute.json"));
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ComputeClusters?type=false&stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        while(!finished) {Thread.sleep(2000);}
+        finished = false;
+
+        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?type=false&compare=true&threshold=0.4&stakeholderId=Test&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        assertEquals(200,first_result.httpStatus);
+        while(!finished) {Thread.sleep(2000);}
+        assertEquals(read_file(path+"/modifyThreshold/recompute/output_auxiliary_modifyThreshold_recompute.json"),second_result.result);
+        assertEquals(create_json_info(first_result.id,"modifyThreshold","true"),second_result.result_info);
+        assertEquals(read_file(path+"/modifyThreshold/recompute/output_auxiliary_modifyThreshold_recompute_dependencies.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetDependencies?stakeholderId=Test"));
+        assertEquals(read_file(path+"/modifyThreshold/recompute/output_auxiliary_modifyThreshold_recompute_requirements.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetRequirements?stakeholderId=Test"));
+        finished = false;
+    }
+    @Test
+    public void cResetOrganization() throws InterruptedException {
         connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
         while(!finished) {Thread.sleep(2000);}
         finished = false;
@@ -72,6 +93,7 @@ public class TestAuxiliaryOperations extends ControllerTest {
         assertEquals(read_file(path+"/resetOrganization/output_auxiliary_resetOrganization_requirements.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetRequirements?stakeholderId=Test"));
         finished = false;
     }
+
 
 
 

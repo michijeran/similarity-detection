@@ -3,6 +3,7 @@ package upc.similarity.semilarapi;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import upc.similarity.semilarapi.dao.SQLiteDAO;
+import upc.similarity.semilarapi.entity.Requirement;
 import upc.similarity.semilarapi.exception.InternalErrorException;
 import upc.similarity.semilarapi.service.SemilarService;
 import upc.similarity.semilarapi.service.SemilarServiceImpl;
@@ -13,20 +14,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public class DriverDatabase {
 
     public static void main(String[] args) {
         try {
             SQLiteDAO db = new SQLiteDAO();
-            String filename = "";
+            String filename = "/home/ferran/Documents/trabajo/DOCS_Qt/results_cluster/new_version/duplicates/all/requirements.json";
             Path p = Paths.get(filename);
             //db.createDatabase();
-            /*SemilarService ss = new SemilarServiceImpl();
+            SemilarService ss = new SemilarServiceImpl();
             //System.out.println(ss.getStakeholders());
             //System.out.println(ss.getRequirements("Test"));
             //System.out.println(ss.getDependencies("Test"));
-            JSONObject json = new JSONObject(db.getRequirements_JSON("UPC"));
+
+            List<Requirement> requirements = db.getRequirements("UPC");
+            for (Requirement requirement: requirements) {
+                write_to_file(requirement.toJSON().toString() + System.lineSeparator(),p);
+            }
+
+            /*JSONObject json = new JSONObject(db.getRequirements_JSON("UPC"));
             JSONArray clusters = json.getJSONArray("clusters");
             for (int i = 0; i < clusters.length(); ++i) {
                 JSONObject aux = clusters.getJSONObject(i);

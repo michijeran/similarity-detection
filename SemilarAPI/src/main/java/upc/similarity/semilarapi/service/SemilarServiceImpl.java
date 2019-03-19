@@ -274,23 +274,115 @@ public class SemilarServiceImpl implements SemilarService {
     }
 
     @Override
-    public void modifyThreshold(String stakeholderId, float threshold) throws InternalErrorException, BadRequestException {
+    public void modifyThreshold(boolean type, String filename, String compare, String stakeholderId, float threshold) throws InternalErrorException, BadRequestException {
+
+        boolean new_stakeholder = true;
         try {
             requirementDAO.createStakeholder(stakeholderId,threshold,0);
         } catch (SQLException e) {
             if (!e.getMessage().contains("PRIMARY KEY")) throw new InternalErrorException("Database exception: Error while creating new organization.");
+            new_stakeholder = false;
         } catch (ClassNotFoundException e) {
             throw new InternalErrorException("Database error: Class not found.");
         }
 
+        List<Requirement> requirements = new ArrayList<>();
+        List<Dependency> dependencies = new ArrayList<>();
 
+        if (!new_stakeholder) {
+            try {
+                try {
+                    requirementDAO.updateThreshold(stakeholderId, threshold);
+                } catch (SQLException e) {
+                    throw new InternalErrorException("Database exception: Error while updating threshold.");
+                }
+                try {
+                    requirements = requirementDAO.getRequirements(stakeholderId);
+                } catch (SQLException e) {
+                    throw new InternalErrorException("Database exception: Error while loading stakeholder requirements.");
+                }
+                try {
+                    dependencies = requirementDAO.getDependencies(stakeholderId);
+                } catch (SQLException e) {
+                    throw new InternalErrorException("Database exception: Error while loading stakeholder dependencies.");
+                }
+            } catch (ClassNotFoundException e) {
+                throw new InternalErrorException("Database error: Class not found.");
+            }
 
-        try {
-            requirementDAO.updateThreshold(stakeholderId, threshold);
-        } catch (SQLException e) {
-            throw new InternalErrorException("Database exception: Error while updating threshold.");
-        } catch (ClassNotFoundException e) {
-            throw new InternalErrorException("Database error: Class not found.");
+            long last_cluster_id = 0;
+
+            HashMap<String, Requirement> requirements_loaded = new HashMap<>();
+            for (Requirement requirement : requirements) requirements_loaded.put(requirement.getId(), requirement);
+
+            List<Cluster> clusters_listed = new ArrayList<>();
+
+            show_time("start loop dependencies");
+            for (Dependency dependency : dependencies) {
+                if (dependency.getDependency_type() != null && dependency.getStatus() != null) {
+                    if (dependency.getDependency_type().equals("duplicates") && dependency.getStatus().equals("accepted")) {
+                        Requirement req1 = requirements_loaded.get(dependency.getFromid());
+                        Requirement req2 = requirements_loaded.get(dependency.getToid());
+                        if (req1.getCluster() == null && req2.getCluster() == null) {
+                            Cluster new_cluster = new Cluster(last_cluster_id);
+                            ++last_cluster_id;
+                            new_cluster.addReq(req1);
+                            new_cluster.addReq(req2);
+                            clusters_listed.add(new_cluster);
+                        } else if (req1.getCluster() == null) {
+                            req2.getCluster().addReq(req1);
+                        } else if (req2.getCluster() == null) {
+                            req1.getCluster().addReq(req2);
+                        } else if (req1.getCluster() != req2.getCluster()) {
+                            merge_clusters(req1.getCluster(), req2.getCluster());
+                            clusters_listed.remove(req2.getCluster());
+                        }
+                    }
+                }
+            }
+            show_time("finish loop dependencies");
+
+            show_time("start requirements loop");
+            for (Requirement requirement: requirements) {
+                requirement.compute_sentence();
+                if (requirement.getCluster() == null) {
+                    Cluster new_cluster = new Cluster(last_cluster_id);
+                    ++last_cluster_id;
+                    new_cluster.addReq(requirement);
+                }
+            }
+            show_time("finish requirements loop");
+
+            try {
+                requirementDAO.updateLastClusterId(last_cluster_id, stakeholderId);
+            } catch (SQLException e) {
+                throw new BadRequestException("Database exception: Error while updating clusters.");
+            } catch (ClassNotFoundException e) {
+                throw new InternalErrorException("Database error: Class not found.");
+            }
+
+            ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin, compare, threshold, true, component);
+
+            show_time("start loop");
+            List<Dependency> result = new ArrayList<>();
+
+            if (type) all_to_all_algorithm(requirements, threshold, comparer, result, clusters_listed, stakeholderId);
+            else all_to_masters_algorithm(requirements, threshold, comparer, result, clusters_listed, stakeholderId);
+            show_time("stop loop");
+
+            //save changes to db
+            for (Requirement requirement : requirements) {
+                try {
+                    requirementDAO.updateRequirementCluster(requirement, stakeholderId);
+                    //save memory
+                    requirement.setSentence_name(null);
+                    requirement.setSentence_text(null);
+                } catch (SQLException e) {
+                    throw new InternalErrorException("Database exception: Error while saving a requirement with id " + requirement.getId() + " to the database.");
+                } catch (ClassNotFoundException e) {
+                    throw new InternalErrorException("Database error: Class not found.");
+                }
+            }
         }
     }
 
@@ -328,23 +420,24 @@ public class SemilarServiceImpl implements SemilarService {
 
         show_time("start loop dependencies");
         for (Dependency dependency: input.getDependencies()) {
-            //test dependency_type && status != null before
-            if (dependency.getDependency_type().equals("duplicates") && dependency.getStatus().equals("accepted")) {
-                Requirement req1 = requirements_loaded.get(dependency.getFromid());
-                Requirement req2 = requirements_loaded.get(dependency.getToid());
-                if (req1.getCluster() == null && req2.getCluster() == null) {
-                    Cluster new_cluster = new Cluster(last_cluster_id);
-                    ++last_cluster_id;
-                    new_cluster.addReq(req1);
-                    new_cluster.addReq(req2);
-                    clusters.add(new_cluster);
-                } else if (req1.getCluster() == null) {
-                    req2.getCluster().addReq(req1);
-                } else if (req2.getCluster() == null) {
-                    req1.getCluster().addReq(req2);
-                } else if (req1.getCluster() != req2.getCluster()) {
-                    merge_clusters(req1.getCluster(), req2.getCluster());
-                    clusters.remove(req2.getCluster());
+            if (dependency.getDependency_type() != null && dependency.getStatus() != null) {
+                if (dependency.getDependency_type().equals("duplicates") && dependency.getStatus().equals("accepted")) {
+                    Requirement req1 = requirements_loaded.get(dependency.getFromid());
+                    Requirement req2 = requirements_loaded.get(dependency.getToid());
+                    if (req1.getCluster() == null && req2.getCluster() == null) {
+                        Cluster new_cluster = new Cluster(last_cluster_id);
+                        ++last_cluster_id;
+                        new_cluster.addReq(req1);
+                        new_cluster.addReq(req2);
+                        clusters.add(new_cluster);
+                    } else if (req1.getCluster() == null) {
+                        req2.getCluster().addReq(req1);
+                    } else if (req2.getCluster() == null) {
+                        req1.getCluster().addReq(req2);
+                    } else if (req1.getCluster() != req2.getCluster()) {
+                        merge_clusters(req1.getCluster(), req2.getCluster());
+                        clusters.remove(req2.getCluster());
+                    }
                 }
             }
         }

@@ -236,13 +236,16 @@ public class RestApiController {
     @CrossOrigin
     @RequestMapping(value = "/ModifyThreshold", method = RequestMethod.POST)
     @ApiOperation(value = "ModifyThreshold")
-    public ResponseEntity<?> InitializeClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
-                                                @ApiParam(value="threshold", required = true, example = "0.4") @RequestParam("threshold") float threshold,
-                                                @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
+    public ResponseEntity<?> ModifyThreshold(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
+                                             @ApiParam(value="threshold", required = true, example = "0.4") @RequestParam("threshold") float threshold,
+                                             @ApiParam(value="Use text attribute in comparison?", required = false, example = "false", defaultValue = "true") @RequestParam(value = "compare", required = false) String compare,
+                                             @ApiParam(value="Compute all requirements?", required = false, example = "true") @RequestParam(value = "type", required = false) boolean type,
+                                             @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
         try {
             url_ok(url);
-            return new ResponseEntity<>(similarityService.modifyThreshold(stakeholderId,threshold,url),HttpStatus.OK);
+            if (compare == null) compare = "false";
+            return new ResponseEntity<>(similarityService.modifyThreshold(type,compare,stakeholderId,threshold,url),HttpStatus.OK);
         } catch (BadRequestException e) {
             return getResponseBadRequest(e);
         } catch (InternalErrorException e) {
@@ -255,7 +258,7 @@ public class RestApiController {
     @RequestMapping(value = "/InitializeClusters", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "InitializeClusters")
     public ResponseEntity<?> InitializeClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
-                                      @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam("compare") String compare,
+                                      @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam(value = "compare", required = false) String compare,
                                       @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
                                       @ApiParam(value="OpenreqJson with the initial dependencies and requirements", required = true) @RequestBody JsonCluster json) {
 
@@ -277,7 +280,7 @@ public class RestApiController {
     @RequestMapping(value = "/ComputeClusters", method = RequestMethod.POST)
     @ApiOperation(value = "ComputeClusters")
     public ResponseEntity<?> ComputeClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
-                                            @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam("compare") String compare,
+                                            @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam(value = "compare", required = false) String compare,
                                             @ApiParam(value="Compute all requirements?", required = true, example = "true") @RequestParam("type") boolean type,
                                             @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
@@ -299,7 +302,7 @@ public class RestApiController {
     @RequestMapping(value = "/UpdateClusters", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "UpdateClusters")
     public ResponseEntity<?> UpdateClusters(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
-                                                @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam("compare") String compare,
+                                                @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam(value = "compare", required = false) String compare,
                                                 @ApiParam(value="Compute all requirements?", required = true, example = "true") @RequestParam("type") boolean type,
                                                 @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
                                                 @ApiParam(value="OpenreqJson with the updated data", required = true) @RequestBody JsonCluster json) {

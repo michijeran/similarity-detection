@@ -40,7 +40,7 @@ public abstract class ComponentAdapter {
 
     public abstract void computeClusters(boolean type, String compare, String filename, String stakeholderId) throws ComponentException, BadRequestException, NotFoundException;
 
-    public abstract void modifyThreshold(String stakeholderId, float threshold) throws ComponentException, BadRequestException;
+    public abstract void modifyThreshold(boolean type, String filename, String compare, String stakeholderId, float threshold) throws ComponentException, BadRequestException;
 
     public abstract void resetStakeholder(String stakeholderId) throws ComponentException, BadRequestException;
 
