@@ -44,9 +44,9 @@ public abstract class ComponentAdapter {
 
     public abstract void resetStakeholder(String stakeholderId) throws ComponentException, BadRequestException;
 
-    public abstract void projects(String stakeholderId, String filename, List<Requirement> requirements) throws ComponentException, BadRequestException;
+    public abstract void projects(String stakeholderId, String filename, List<String> project_requirements_ids) throws ComponentException, BadRequestException;
 
-    public abstract void reqProject(String stakeholderId, String filename, Requirement requirement, List<Requirement> project_requirements) throws ComponentException, BadRequestException;
+    public abstract void reqProject(String stakeholderId, String filename, String requirement_id, List<String> project_requirements_ids) throws ComponentException, BadRequestException;
 
     //auxiliary operations
     protected void connection_component(String URL, JSONObject json) throws ComponentException, BadRequestException {

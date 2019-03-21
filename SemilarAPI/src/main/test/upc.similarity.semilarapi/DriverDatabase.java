@@ -21,7 +21,7 @@ public class DriverDatabase {
     public static void main(String[] args) {
         try {
             SQLiteDAO db = new SQLiteDAO();
-            String filename = "/home/ferran/Documents/trabajo/DOCS_Qt/results_cluster/new_version/duplicates/all/requirements.json";
+            String filename = "/home/ferran/Documents/trabajo/DOCS_Qt/results_cluster/new_version/2ntry/masters/requirements.json";
             Path p = Paths.get(filename);
             //db.createDatabase();
             SemilarService ss = new SemilarServiceImpl();

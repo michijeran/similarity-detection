@@ -9,13 +9,13 @@ import java.util.List;
 public class Projects implements Serializable {
 
     @JsonProperty(value="requirements")
-    private List<RequirementId> requirements;
+    private List<String> requirements;
 
     public Projects() {
         requirements = new ArrayList<>();
     }
 
-    public List<RequirementId> getRequirements() {
+    public List<String> getRequirements() {
         return requirements;
     }
 

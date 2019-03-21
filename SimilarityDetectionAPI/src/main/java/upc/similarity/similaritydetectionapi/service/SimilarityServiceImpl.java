@@ -1,6 +1,5 @@
 package upc.similarity.similaritydetectionapi.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 import upc.similarity.similaritydetectionapi.AdaptersController;
 import upc.similarity.similaritydetectionapi.adapter.ComponentAdapter;
 import upc.similarity.similaritydetectionapi.adapter.SemilarAdapter;
-import upc.similarity.similaritydetectionapi.entity.Dependency;
 import upc.similarity.similaritydetectionapi.entity.Project;
 import upc.similarity.similaritydetectionapi.entity.input_output.*;
 import upc.similarity.similaritydetectionapi.entity.Requirement;
@@ -526,9 +524,9 @@ public class SimilarityServiceImpl implements SimilarityService {
         return id;
     }
 
-    public Result_id projects(String stakeholderId, List<String> projects, String url, ProjectsANDRequirements input) throws InternalErrorException, BadRequestException, NotFoundException {
+    public Result_id projects(String stakeholderId, List<String> projects, String url, Projects input) throws InternalErrorException, BadRequestException, NotFoundException {
 
-        if (input.getRequirements().size() == 0 || input.getProjects().size() == 0) throw new BadRequestException("The provided json has not requirements or has not projects");
+        if (input.getProjects().size() == 0) throw new BadRequestException("The provided json has no projects");
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -536,12 +534,11 @@ public class SimilarityServiceImpl implements SimilarityService {
         //Create file to save result
         File file = create_file(path+id.getId());
 
-        List<Requirement> requirements = new ArrayList<>();
+        List<String> project_requirements_id = new ArrayList<>();
 
         for (String project_id: projects) {
             Project project = search_project(project_id, input.getProjects());
-            List<Requirement> project_requirements = search_project_requirements(project, input.getRequirements());
-            requirements.addAll(project_requirements);
+            project_requirements_id.addAll(project.getSpecifiedRequirements());
         }
 
         //New thread
@@ -552,7 +549,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.projects(stakeholderId,id.getId(),requirements);
+                    componentAdapter.projects(stakeholderId,id.getId(),project_requirements_id);
                     fis = new FileInputStream(file);
                     success = "true";
                 } catch (ComponentException e) {
@@ -563,7 +560,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                     fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
                 }
                 finally {
-                    update_client(fis,url,id.getId(),success,"resetOrganization");
+                    update_client(fis,url,id.getId(),success,"projects");
                     try {
                         delete_file(file);
                     } catch (InternalErrorException e) {
@@ -578,9 +575,9 @@ public class SimilarityServiceImpl implements SimilarityService {
 
     }
 
-    public Result_id reqProject(String stakeholderId, String project_id, String requirement_id, String url, ProjectsANDRequirements input) throws InternalErrorException, BadRequestException, NotFoundException {
+    public Result_id reqProject(String stakeholderId, String project_id, String requirement_id, String url, Projects input) throws InternalErrorException, BadRequestException, NotFoundException {
 
-        if (input.getRequirements().size() == 0 || input.getProjects().size() == 0) throw new BadRequestException("The provided json has not requirements or has not projects");
+        if (input.getProjects().size() == 0) throw new BadRequestException("The provided json has no projects");
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -588,14 +585,7 @@ public class SimilarityServiceImpl implements SimilarityService {
         //Create file to save result
         File file = create_file(path+id.getId());
 
-        List<String> aux1 = new ArrayList<>();
-        aux1.add(requirement_id);
-        List<Requirement> aux2 = search_requirements(aux1, input.getRequirements());
-        Requirement requirement = aux2.get(0); //TODO check this
-
         Project project = search_project(project_id, input.getProjects());
-        List<Requirement> project_requirements = search_project_requirements(project, input.getRequirements());
-        if (project_requirements.size() == 0) throw new BadRequestException("The provided json does not have the specified project requirements.");
 
 
         //New thread
@@ -606,7 +596,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.reqProject(stakeholderId,id.getId(),requirement,project_requirements);
+                    componentAdapter.reqProject(stakeholderId,id.getId(),requirement_id,project.getSpecifiedRequirements());
                     fis = new FileInputStream(file);
                     success = "true";
                 } catch (ComponentException e) {
@@ -617,7 +607,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                     fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
                 }
                 finally {
-                    update_client(fis,url,id.getId(),success,"resetOrganization");
+                    update_client(fis,url,id.getId(),success,"reqProject");
                     try {
                         delete_file(file);
                     } catch (InternalErrorException e) {

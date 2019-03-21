@@ -75,6 +75,7 @@ public class TestAuxiliaryOperations extends ControllerTest {
         assertEquals(read_file(path+"/modifyThreshold/recompute/output_auxiliary_modifyThreshold_recompute_requirements.json"), connect_to_component_simple("http://localhost:9405/upc/Semilar/TestGetRequirements?stakeholderId=Test"));
         finished = false;
     }
+
     @Test
     public void cResetOrganization() throws InterruptedException {
         connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);

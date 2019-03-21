@@ -124,9 +124,10 @@ public class SemilarAdapter extends ComponentAdapter{
     }
 
     @Override
-    public void projects(String stakeholderId, String filename, List<Requirement> requirements) throws ComponentException, BadRequestException {
+    public void projects(String stakeholderId, String filename, List<String> project_requirements_ids) throws ComponentException, BadRequestException {
 
-        JSONArray reqs_json = list_requirements_to_JSON(requirements);
+        JSONArray reqs_json = new JSONArray();
+        for (String id: project_requirements_ids) reqs_json.put(id);
 
         JSONObject json_to_send = new JSONObject();
         json_to_send.put("requirements",reqs_json);
@@ -136,15 +137,15 @@ public class SemilarAdapter extends ComponentAdapter{
     }
 
     @Override
-    public void reqProject(String stakeholderId, String filename, Requirement requirement, List<Requirement> project_requirements) throws ComponentException, BadRequestException {
+    public void reqProject(String stakeholderId, String filename, String requirement_id, List<String> project_requirements_ids) throws ComponentException, BadRequestException {
 
-        JSONArray reqs_json = list_requirements_to_JSON(project_requirements);
+        JSONArray reqs_json = new JSONArray();
+        for (String id: project_requirements_ids) reqs_json.put(id);
 
         JSONObject json_to_send = new JSONObject();
-        json_to_send.put("project_requirements",reqs_json);
-        json_to_send.put("requirement",requirement.toJSON());
+        json_to_send.put("requirements",reqs_json);
 
-        connection_component(URL + "reqProject?stakeholderId=" + stakeholderId + "&filename=" + filename,json_to_send);
+        connection_component(URL + "reqProject?stakeholderId=" + stakeholderId + "&filename=" + filename + "&requirement=" + requirement_id,json_to_send);
 
     }
 

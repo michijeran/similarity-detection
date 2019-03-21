@@ -31,7 +31,7 @@ public interface SemilarService {
 
     public void resetStakeholder(String stakeholderId) throws InternalErrorException, BadRequestException;
 
-    public void reqProject(String stakeholderId, String filename, ReqProj input) throws BadRequestException, InternalErrorException;
+    public void reqProject(String stakeholderId, String filename, String requirement_id, Projects input) throws BadRequestException, InternalErrorException;
 
     public void projects(String stakeholderId, String filename, Projects input) throws BadRequestException, InternalErrorException;
 

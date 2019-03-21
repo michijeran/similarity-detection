@@ -345,7 +345,7 @@ public class RestApiController {
     @ApiOperation(value = "Projects")
     public ResponseEntity<?> Projects(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
                                       @ApiParam(value="Ids of the projects", required = true, example = "UPC") @RequestParam("projects") List<String> projects,
-                                      @ApiParam(value="OpenreqJson with the projects and their requirements", required = true) @RequestBody ProjectsANDRequirements json,
+                                      @ApiParam(value="OpenreqJson with the projects and their requirements", required = true) @RequestBody Projects json,
                                       @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
         try {
@@ -367,7 +367,7 @@ public class RestApiController {
     public ResponseEntity<?> ReqProject(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
                                       @ApiParam(value="Id of the project", required = true, example = "UPC") @RequestParam("project") String project,
                                       @ApiParam(value="Id of the requirement", required = true, example = "UPC") @RequestParam("requirement") String requirement,
-                                      @ApiParam(value="OpenreqJson with the project and their requirements", required = true) @RequestBody ProjectsANDRequirements json,
+                                      @ApiParam(value="OpenreqJson with the project and their requirements", required = true) @RequestBody Projects json,
                                       @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
         try {

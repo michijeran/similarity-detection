@@ -156,7 +156,7 @@ public class RestApiController {
         }
     }
 
-    @RequestMapping(value = "/upc/Semilar/projects", method = RequestMethod.POST)
+    /*@RequestMapping(value = "/upc/Semilar/projects", method = RequestMethod.POST)
     public ResponseEntity<?> projects(@RequestParam("compare") String compare,
                                             @RequestParam("type") boolean type,
                                             @RequestParam("stakeholderId") String stakeholderId,
@@ -172,14 +172,15 @@ public class RestApiController {
             e.printStackTrace();
             return new ResponseEntity<>(e,HttpStatus.valueOf(e.getStatus()));
         }
-    }
+    }*/
 
     @RequestMapping(value = "/upc/Semilar/reqProject", method = RequestMethod.POST)
     public ResponseEntity<?> reqProject(@RequestParam("stakeholderId") String stakeholderId,
                                             @RequestParam("filename") String filename,
-                                            @RequestBody ReqProj input) {
+                                        @RequestParam("requirement") String requirement,
+                                            @RequestBody Projects input) {
         try {
-            semilarService.reqProject(stakeholderId,filename,input);
+            semilarService.reqProject(stakeholderId,filename,requirement,input);
             return new ResponseEntity<>(null,HttpStatus.OK);
         } catch (InternalErrorException e) {
             e.printStackTrace();
