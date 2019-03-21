@@ -27,6 +27,11 @@ public interface SimilarityService {
 
     public Result_id modifyThreshold(boolean type, String compare, String stakeholderId, float threshold, String url) throws InternalErrorException;
 
+    //Gets
+    public Result_id projects(String stakeholderId, List<String> projects, String url, ProjectsANDRequirements input) throws InternalErrorException, BadRequestException, NotFoundException;
+
+    public Result_id reqProject(String stakeholderId, String project, String requirement, String url, ProjectsANDRequirements input) throws InternalErrorException, BadRequestException, NotFoundException;
+
     // DB
     public Result_id addRequirements(String stakeholderId, Requirements input, String url) throws ComponentException, BadRequestException, NotFoundException;
 

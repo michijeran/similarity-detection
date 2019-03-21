@@ -9,10 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 //import upc.similarity.similaritydetectionapi.test.ControllerTest;
-import upc.similarity.similaritydetectionapi.entity.input_output.JsonCluster;
-import upc.similarity.similaritydetectionapi.entity.input_output.JsonProject;
-import upc.similarity.similaritydetectionapi.entity.input_output.JsonReqReq;
-import upc.similarity.similaritydetectionapi.entity.input_output.Requirements;
+import upc.similarity.similaritydetectionapi.entity.input_output.*;
 import upc.similarity.similaritydetectionapi.exception.*;
 import upc.similarity.similaritydetectionapi.service.SimilarityService;
 
@@ -38,7 +35,7 @@ public class RestApiController {
 
     // Req - Req
 
-    @CrossOrigin
+   /* @CrossOrigin
     @RequestMapping(value = "/ReqReq", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Similarity comparison between two requirements", notes = "<p>The resulting input stream contains an array of dependencies with the similarity dependency between the two selected requirements." +
             " The dependency is only returned if doesn't exist another similar or duplicate dependency between the two requirements.</p>" +
@@ -128,7 +125,7 @@ public class RestApiController {
         }
     }
 
-
+*/
     // DB
 
     @CrossOrigin
@@ -211,6 +208,7 @@ public class RestApiController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+
     @CrossOrigin
     @RequestMapping(value = "/Clusters", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Clusters")
@@ -226,11 +224,13 @@ public class RestApiController {
             if (compare == null) compare = "false";
             if (type == null) type = "all";
             return new ResponseEntity<>(similarityService.simCluster(project,compare,threshold,url,type,json),HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(e,HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (BadRequestException e) {
+            return getResponseBadRequest(e);
+        } catch (InternalErrorException e) {
+            return getInternalError(e);
+        } catch (NotFoundException e) {
+            return getResponseNotFound(e);
         }
-        //TODO improve exception handling
     }
 
     @CrossOrigin
@@ -251,7 +251,6 @@ public class RestApiController {
         } catch (InternalErrorException e) {
             return getInternalError(e);
         }
-
     }
 
     @CrossOrigin
@@ -325,7 +324,8 @@ public class RestApiController {
     @RequestMapping(value = "/ResetOrganization", method = RequestMethod.POST)
     @ApiOperation(value = "ResetOrganization")
     public ResponseEntity<?> ResetOrganization(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
-                                                @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
+                                               @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
+                                               @ApiParam(value="OpenreqJson with the updated data", required = true) @RequestBody JsonCluster json) {
 
         try {
             url_ok(url);
@@ -336,6 +336,49 @@ public class RestApiController {
             return getResponseNotFound(e);
         } catch (InternalErrorException e) {
             return getInternalError(e);
+        }
+
+    }
+
+    @CrossOrigin
+    @RequestMapping(value = "/Projects", method = RequestMethod.POST)
+    @ApiOperation(value = "Projects")
+    public ResponseEntity<?> Projects(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
+                                      @ApiParam(value="Ids of the projects", required = true, example = "UPC") @RequestParam("projects") List<String> projects,
+                                      @ApiParam(value="OpenreqJson with the projects and their requirements", required = true) @RequestBody ProjectsANDRequirements json,
+                                      @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
+
+        try {
+            url_ok(url);
+            return new ResponseEntity<>(similarityService.projects(stakeholderId,projects,url,json),HttpStatus.OK);
+        } catch (BadRequestException e) {
+            return getResponseBadRequest(e);
+        } catch (InternalErrorException e) {
+            return getInternalError(e);
+        } catch (NotFoundException e) {
+            return getResponseNotFound(e);
+        }
+
+    }
+
+    @CrossOrigin
+    @RequestMapping(value = "/ReqProject", method = RequestMethod.POST)
+    @ApiOperation(value = "ReqProject")
+    public ResponseEntity<?> ReqProject(@ApiParam(value="stakeholderId", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
+                                      @ApiParam(value="Id of the project", required = true, example = "UPC") @RequestParam("project") String project,
+                                      @ApiParam(value="Id of the requirement", required = true, example = "UPC") @RequestParam("requirement") String requirement,
+                                      @ApiParam(value="OpenreqJson with the project and their requirements", required = true) @RequestBody ProjectsANDRequirements json,
+                                      @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
+
+        try {
+            url_ok(url);
+            return new ResponseEntity<>(similarityService.reqProject(stakeholderId,project,requirement,url,json),HttpStatus.OK);
+        } catch (BadRequestException e) {
+            return getResponseBadRequest(e);
+        } catch (InternalErrorException e) {
+            return getInternalError(e);
+        } catch (NotFoundException e) {
+            return getResponseNotFound(e);
         }
 
     }

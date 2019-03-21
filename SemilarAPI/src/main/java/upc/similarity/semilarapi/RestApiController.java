@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import upc.similarity.semilarapi.entity.Requirement;
 import upc.similarity.semilarapi.entity.input.*;
 import upc.similarity.semilarapi.exception.BadRequestException;
 import upc.similarity.semilarapi.exception.InternalErrorException;
@@ -21,7 +22,7 @@ public class RestApiController {
     SemilarService semilarService;
 
     //Similarity
-    @RequestMapping(value = "/upc/Semilar/PairSim", method = RequestMethod.POST)
+    /*@RequestMapping(value = "/upc/Semilar/PairSim", method = RequestMethod.POST)
     public ResponseEntity<?> similarity(@RequestParam("compare") String compare,
                                         @RequestParam("stakeholderId") String stakeholderId,
                                         @RequestParam("filename") String filename,
@@ -62,14 +63,14 @@ public class RestApiController {
                                             @RequestParam("filename") String filename,
                                             @RequestBody ProjOp input) {
         try {
-            /*if (input.getRequirements().size() < 1000)*/ semilarService.similarityProj(stakeholderId,compare,threshold,filename,input);
+            /*if (input.getRequirements().size() < 1000)*/ /*semilarService.similarityProj(stakeholderId,compare,threshold,filename,input);
             //else semilarService.similarityProj_Large(stakeholderid,compare,threshold,filename,input);
             return new ResponseEntity<>(null,HttpStatus.OK);
         } catch (InternalErrorException e) {
             e.printStackTrace();
             return new ResponseEntity<>(e,HttpStatus.valueOf(510));
         }
-    }
+    }*/
 
     @RequestMapping(value = "/upc/Semilar/iniClusters", method = RequestMethod.POST)
     public ResponseEntity<?> iniClusters(@RequestParam("compare") String compare,
@@ -145,6 +146,56 @@ public class RestApiController {
     public ResponseEntity<?> resetStakeholder(@RequestParam("stakeholderId") String stakeholderId) {
         try {
             semilarService.resetStakeholder(stakeholderId);
+            return new ResponseEntity<>(null,HttpStatus.OK);
+        } catch (InternalErrorException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(510));
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(e.getStatus()));
+        }
+    }
+
+    @RequestMapping(value = "/upc/Semilar/projects", method = RequestMethod.POST)
+    public ResponseEntity<?> projects(@RequestParam("compare") String compare,
+                                            @RequestParam("type") boolean type,
+                                            @RequestParam("stakeholderId") String stakeholderId,
+                                            @RequestParam("filename") String filename,
+                                            @RequestBody IniClusterOp input) {
+        try {
+            semilarService.updateClusters(type,compare,stakeholderId,filename,input);
+            return new ResponseEntity<>(null,HttpStatus.OK);
+        } catch (InternalErrorException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(510));
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(e.getStatus()));
+        }
+    }
+
+    @RequestMapping(value = "/upc/Semilar/reqProject", method = RequestMethod.POST)
+    public ResponseEntity<?> reqProject(@RequestParam("stakeholderId") String stakeholderId,
+                                            @RequestParam("filename") String filename,
+                                            @RequestBody ReqProj input) {
+        try {
+            semilarService.reqProject(stakeholderId,filename,input);
+            return new ResponseEntity<>(null,HttpStatus.OK);
+        } catch (InternalErrorException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(510));
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e,HttpStatus.valueOf(e.getStatus()));
+        }
+    }
+
+    @RequestMapping(value = "/upc/Semilar/projects", method = RequestMethod.POST)
+    public ResponseEntity<?> projects(@RequestParam("stakeholderId") String stakeholderId,
+                                        @RequestParam("filename") String filename,
+                                        @RequestBody Projects input) {
+        try {
+            semilarService.projects(stakeholderId,filename,input);
             return new ResponseEntity<>(null,HttpStatus.OK);
         } catch (InternalErrorException e) {
             e.printStackTrace();

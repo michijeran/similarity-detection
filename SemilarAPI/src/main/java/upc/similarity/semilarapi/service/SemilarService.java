@@ -4,10 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.json.JSONObject;
-import upc.similarity.semilarapi.entity.input.IniClusterOp;
-import upc.similarity.semilarapi.entity.input.PairReq;
-import upc.similarity.semilarapi.entity.input.ProjOp;
-import upc.similarity.semilarapi.entity.input.ReqProjOp;
+import upc.similarity.semilarapi.entity.input.*;
 import upc.similarity.semilarapi.entity.output.Dependencies;
 import upc.similarity.semilarapi.entity.Requirement;
 import upc.similarity.semilarapi.exception.BadRequestException;
@@ -33,6 +30,11 @@ public interface SemilarService {
     public void modifyThreshold(boolean type, String filename, String compare, String stakeholderId, float threshold) throws InternalErrorException, BadRequestException;
 
     public void resetStakeholder(String stakeholderId) throws InternalErrorException, BadRequestException;
+
+    public void reqProject(String stakeholderId, String filename, ReqProj input) throws BadRequestException, InternalErrorException;
+
+    public void projects(String stakeholderId, String filename, Projects input) throws BadRequestException, InternalErrorException;
+
 
 
 

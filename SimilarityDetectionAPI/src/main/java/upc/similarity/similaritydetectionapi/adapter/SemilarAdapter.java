@@ -123,6 +123,32 @@ public class SemilarAdapter extends ComponentAdapter{
         connection_component(URL + "resetStakeholder?stakeholderId=" + stakeholderId,null);
     }
 
+    @Override
+    public void projects(String stakeholderId, String filename, List<Requirement> requirements) throws ComponentException, BadRequestException {
+
+        JSONArray reqs_json = list_requirements_to_JSON(requirements);
+
+        JSONObject json_to_send = new JSONObject();
+        json_to_send.put("requirements",reqs_json);
+
+        connection_component(URL + "projects?stakeholderId=" + stakeholderId + "&filename=" + filename,json_to_send);
+
+    }
+
+    @Override
+    public void reqProject(String stakeholderId, String filename, Requirement requirement, List<Requirement> project_requirements) throws ComponentException, BadRequestException {
+
+        JSONArray reqs_json = list_requirements_to_JSON(project_requirements);
+
+        JSONObject json_to_send = new JSONObject();
+        json_to_send.put("project_requirements",reqs_json);
+        json_to_send.put("requirement",requirement.toJSON());
+
+        connection_component(URL + "reqProject?stakeholderId=" + stakeholderId + "&filename=" + filename,json_to_send);
+
+    }
+
+
     public void processRequirements(String stakeholderId, List<Requirement> requirements) throws ComponentException, BadRequestException {
         //TODO move this part to abstract class
 

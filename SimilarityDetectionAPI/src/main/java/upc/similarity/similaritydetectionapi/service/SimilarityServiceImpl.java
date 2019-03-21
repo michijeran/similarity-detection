@@ -526,6 +526,112 @@ public class SimilarityServiceImpl implements SimilarityService {
         return id;
     }
 
+    public Result_id projects(String stakeholderId, List<String> projects, String url, ProjectsANDRequirements input) throws InternalErrorException, BadRequestException, NotFoundException {
+
+        if (input.getRequirements().size() == 0 || input.getProjects().size() == 0) throw new BadRequestException("The provided json has not requirements or has not projects");
+
+        String component = "Semilar";
+        Result_id id = get_id();
+
+        //Create file to save result
+        File file = create_file(path+id.getId());
+
+        List<Requirement> requirements = new ArrayList<>();
+
+        for (String project_id: projects) {
+            Project project = search_project(project_id, input.getProjects());
+            List<Requirement> project_requirements = search_project_requirements(project, input.getRequirements());
+            requirements.addAll(project_requirements);
+        }
+
+        //New thread
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InputStream fis = null;
+                String success = "false";
+                try {
+                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
+                    componentAdapter.projects(stakeholderId,id.getId(),requirements);
+                    fis = new FileInputStream(file);
+                    success = "true";
+                } catch (ComponentException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
+                } catch (BadRequestException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
+                }catch (FileNotFoundException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
+                }
+                finally {
+                    update_client(fis,url,id.getId(),success,"resetOrganization");
+                    try {
+                        delete_file(file);
+                    } catch (InternalErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        });
+
+        thread.start();
+        return id;
+
+    }
+
+    public Result_id reqProject(String stakeholderId, String project_id, String requirement_id, String url, ProjectsANDRequirements input) throws InternalErrorException, BadRequestException, NotFoundException {
+
+        if (input.getRequirements().size() == 0 || input.getProjects().size() == 0) throw new BadRequestException("The provided json has not requirements or has not projects");
+
+        String component = "Semilar";
+        Result_id id = get_id();
+
+        //Create file to save result
+        File file = create_file(path+id.getId());
+
+        List<String> aux1 = new ArrayList<>();
+        aux1.add(requirement_id);
+        List<Requirement> aux2 = search_requirements(aux1, input.getRequirements());
+        Requirement requirement = aux2.get(0); //TODO check this
+
+        Project project = search_project(project_id, input.getProjects());
+        List<Requirement> project_requirements = search_project_requirements(project, input.getRequirements());
+        if (project_requirements.size() == 0) throw new BadRequestException("The provided json does not have the specified project requirements.");
+
+
+        //New thread
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InputStream fis = null;
+                String success = "false";
+                try {
+                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
+                    componentAdapter.reqProject(stakeholderId,id.getId(),requirement,project_requirements);
+                    fis = new FileInputStream(file);
+                    success = "true";
+                } catch (ComponentException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
+                } catch (BadRequestException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
+                }catch (FileNotFoundException e) {
+                    fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
+                }
+                finally {
+                    update_client(fis,url,id.getId(),success,"resetOrganization");
+                    try {
+                        delete_file(file);
+                    } catch (InternalErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
+        });
+
+        thread.start();
+        return id;
+    }
+
+
 
     //Auxiliary operations
 

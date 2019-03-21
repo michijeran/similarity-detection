@@ -460,7 +460,7 @@ public class SemilarServiceImpl implements SemilarService {
                 requirement.setSentence_name(null);
                 requirement.setSentence_text(null);
             } catch (SQLException e) {
-                throw new BadRequestException("Database exception: Error while saving a requirement with id " + requirement.getId() + " to the database. There is no stakeholder called "+stakeholderId+".");
+                throw new BadRequestException("Database exception: Error while saving a requirement with id " + requirement.getId() + " to the database. The requirement appears two times in the input array.");
             } catch (ClassNotFoundException e) {
                 throw new InternalErrorException("Database error: Class not found.");
             }
@@ -832,6 +832,132 @@ public class SemilarServiceImpl implements SemilarService {
 
         show_time("finish computing");
     }
+
+    @Override
+    public void reqProject(String stakeholderId, String filename, ReqProj input) throws BadRequestException, InternalErrorException {
+
+        boolean stakeholder;
+        try {
+            stakeholder = requirementDAO.existStakeholder(stakeholderId);
+        } catch (SQLException e) {
+            throw new InternalErrorException("Database exception: Error while loading the stakeholder.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+        if (!stakeholder) throw new BadRequestException("Database exception: There is no stakeholder with id " + stakeholderId + ".");
+
+        List<String> ids = new ArrayList<>();
+        Requirement requirement = null;
+        try {
+            try {
+                requirement = requirementDAO.getRequirement(input.getRequirement().getId(),stakeholderId);
+            } catch (SQLException e) {
+                throw new BadRequestException("Database exception: Error while loading a requirement. " + e.getMessage());
+            }
+            try {
+                ids = requirementDAO.getClusterRequirementsId(requirement.getClusterId(),stakeholderId);
+            } catch (SQLException e) {
+                throw new InternalErrorException("Database exception: Error while loading requirements.");
+            }
+        }  catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+
+        HashSet<String> project_requirements_ids = new HashSet();
+
+        for (RequirementId project_requirement: input.getProject_requirements()) {
+            project_requirements_ids.add(project_requirement.getId());
+        }
+
+        Path p = Paths.get("../testing/output/"+filename);
+        String s = System.lineSeparator() + "{\"dependencies\": [";
+        write_to_file(s,p);
+        boolean firstComa = true;
+
+        for(String id: ids) {
+            if (project_requirements_ids.contains(id)) {
+                Dependency aux_db = null;
+                try {
+                    aux_db = requirementDAO.getDependency(requirement.getId(),id,stakeholderId);
+                } catch (SQLException e) {
+                    if (!e.getMessage().contains("The dependency does not exist in the database")) throw new InternalErrorException("Database error: Error while loading a dependency.");
+                } catch (ClassNotFoundException e) {
+                    throw new InternalErrorException("Database error: Class not found.");
+                }
+                if (aux_db == null) {
+                    Dependency dependency = new Dependency(requirement.getId(), id, "proposed", "duplicates");
+                    String aux = System.lineSeparator() + dependency.print_json();
+                    if (!firstComa) aux = "," + aux;
+                    firstComa = false;
+                    write_to_file(aux, p);
+                }
+                project_requirements_ids.remove(id);
+            }
+        }
+
+        s = System.lineSeparator() + "]}";
+        write_to_file(s,p);
+
+
+    }
+
+    @Override
+    public void projects(String stakeholderId, String filename, Projects input) throws BadRequestException, InternalErrorException {
+
+        boolean stakeholder;
+        try {
+            stakeholder = requirementDAO.existStakeholder(stakeholderId);
+        } catch (SQLException e) {
+            throw new InternalErrorException("Database exception: Error while loading the stakeholder.");
+        } catch (ClassNotFoundException e) {
+            throw new InternalErrorException("Database error: Class not found.");
+        }
+        if (!stakeholder) throw new BadRequestException("Database exception: There is no stakeholder with id " + stakeholderId + ".");
+
+        Path p = Paths.get("../testing/output/"+filename);
+        String s = System.lineSeparator() + "{\"dependencies\": [";
+        write_to_file(s,p);
+        boolean firstComa = true;
+
+        List<Requirement> loaded_requirements = new ArrayList<>();
+        for (RequirementId requirementId: input.getRequirements()) {
+            try {
+                loaded_requirements.add(requirementDAO.getRequirement(requirementId.getId(),stakeholderId)); //TODO only load the id and the clusterid
+            } catch (SQLException e) {
+                throw new InternalErrorException("Database error: Error while loading database requirements");
+            } catch (ClassNotFoundException e) {
+                throw new InternalErrorException("Database error: Class not found.");
+            }
+
+            for (int i = 0; i < loaded_requirements.size(); ++i) {
+                Requirement requirement1 = loaded_requirements.get(i);
+                for (int j = i + 1; j < loaded_requirements.size(); ++j) {
+                    Requirement requirement2 = loaded_requirements.get(j);
+                    if (requirement1.getClusterId() == requirement2.getClusterId()) {
+                        Dependency aux_db = null;
+                        try {
+                            aux_db = requirementDAO.getDependency(requirement1.getId(),requirement2.getId(),stakeholderId);
+                        } catch (SQLException e) {
+                            if (!e.getMessage().contains("The dependency does not exist in the database")) throw new InternalErrorException("Database error: Error while loading a dependency.");
+                        } catch (ClassNotFoundException e) {
+                            throw new InternalErrorException("Database error: Class not found.");
+                        }
+                        if (aux_db == null) {
+                            Dependency dependency = new Dependency(requirement1.getId(),requirement2.getId(), "proposed", "duplicates");
+                            String aux = System.lineSeparator() + dependency.print_json();
+                            if (!firstComa) aux = "," + aux;
+                            firstComa = false;
+                            write_to_file(aux, p);
+                        }
+                    }
+                }
+            }
+        }
+
+        s = System.lineSeparator() + "]}";
+        write_to_file(s,p);
+    }
+
 
     //Database
     @Override

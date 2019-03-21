@@ -132,6 +132,21 @@ public class SQLiteDAO implements RequirementDAO {
     }
 
     @Override
+    public boolean existStakeholder(String stakeholderid) throws SQLException, ClassNotFoundException {
+
+        PreparedStatement ps;
+        ps = c.prepareStatement("SELECT COUNT(*) FROM stakeholders WHERE id = ?");
+        ps.setString(1, stakeholderid);
+        ps.execute();
+        ResultSet rs = ps.getResultSet();
+        rs.next();
+        int count = rs.getInt(1);
+
+        return (count == 1);
+
+    }
+
+    @Override
     public void savePreprocessed(Requirement r, String stakeholderid) throws SQLException, ClassNotFoundException {
         if (c == null) c = getConnection();
 
@@ -301,6 +316,26 @@ public class SQLiteDAO implements RequirementDAO {
             throw new SQLException("The requirement with id " + id_aux + " does not exist in the database");
         }
     }
+
+    @Override
+    public List<String> getClusterRequirementsId(long cluster_id, String stakeholderid) throws SQLException, ClassNotFoundException {
+
+        if (c == null) c = getConnection();
+        PreparedStatement ps;
+        ps = c.prepareStatement("SELECT id FROM prepocessed WHERE clusterid = ? AND stakeholderid = ?");
+        ps.setLong(1,cluster_id);
+        ps.setString(2,stakeholderid);
+        ps.execute();
+        ResultSet rs = ps.getResultSet();
+
+        List<String> result = new ArrayList<>();
+        while (rs.next()) {
+            result.add(rs.getString("id"));
+        }
+
+        return result;
+    }
+
 
     @Override
     public Dependency getDependency(String fromid, String toid, String stakeholderid) throws SQLException, ClassNotFoundException {
