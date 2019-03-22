@@ -59,7 +59,7 @@ public class Requirement implements Serializable {
         }
     }
 
-    public Requirement(String id, int name, int text, Sentence sentence_name, Sentence sentence_text, long created_at) {
+    /*public Requirement(String id, int name, int text, Sentence sentence_name, Sentence sentence_text, long created_at) {
         this.id = id;
         this.created_at = created_at;
         if (name == 0) {
@@ -76,7 +76,7 @@ public class Requirement implements Serializable {
             this.text = sentence_text.getRawForm();
             this.sentence_text = sentence_text;
         }
-    }
+    }*/
 
     class Info {
         public boolean completed;

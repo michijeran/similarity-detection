@@ -294,7 +294,7 @@ public class SQLiteDAO implements RequirementDAO {
     public Requirement getRequirement(String id_aux, String stakeholderid) throws SQLException, ClassNotFoundException {
         if (c == null) c = getConnection();
         PreparedStatement ps;
-        ps = c.prepareStatement("SELECT id, created_at, name, text, sentence_name, sentence_text FROM prepocessed WHERE id = ? AND stakeholderid = ?");
+        ps = c.prepareStatement("SELECT id, clusterid, master, created_at, name, text, sentence_name, sentence_text FROM prepocessed WHERE id = ? AND stakeholderid = ?");
         ps.setString(1,id_aux);
         ps.setString(2,stakeholderid);
         ps.execute();
@@ -302,6 +302,8 @@ public class SQLiteDAO implements RequirementDAO {
 
         if (rs.next()) {
             String id = rs.getString("id");
+            long clusterid = rs.getLong("clusterid");
+            boolean master = rs.getBoolean("master");
             Long created_at = rs.getLong("created_at");
             int name = rs.getInt("name");
             int text = rs.getInt("text");
@@ -309,8 +311,7 @@ public class SQLiteDAO implements RequirementDAO {
             Sentence sentence_text = null;
             if (name == 1) sentence_name = JSON2Sentence(rs.getString("sentence_name"));
             if (text == 1) sentence_text = JSON2Sentence(rs.getString("sentence_text"));
-            Requirement result = new Requirement(id,name,text,sentence_name,sentence_text,created_at);
-            return result;
+            return new Requirement(id,clusterid,master,name,text,sentence_name,sentence_text,created_at);
         }
         else {
             throw new SQLException("The requirement with id " + id_aux + " does not exist in the database");
