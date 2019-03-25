@@ -24,15 +24,17 @@ public class SwaggerConfig {
     private static final String	LICENSE_TEXT	    = "License";
     private static final String	title		    = "SIMILARITY DETECTION COMPONENT";
     private static final String	description	    = "" +
-            "<p>The component is based in <a href=\"http://deeptutor2.memphis.edu/Semilar-Web/public/downloads/ACL-13.SEMILAR.DEMO.pdf\">Semilar</a> semantic similarity library. The aim of the API is to calculate the similarity score between multiple pairs of requirements."+
-            "</p>" +
-            "<p>There are three different types of operations: </p>" +
+            "<p>The component is based in <a href=\"http://deeptutor2.memphis.edu/Semilar-Web/public/downloads/ACL-13.SEMILAR.DEMO.pdf\">Semilar</a> semantic similarity library. The aim of the API is to found duplicate requirements."+
+            "</p><p>This service groups duplicates requirements inside clusters. Each organization has saved its own requirements grouped into clusters in an internal database. Also, each organization has a set of accepted " +
+            "and rejected dependencies saved in the database which are taken into account when calculating the similarity between the different requirements. Instead of comparing the requirements separately, this service" +
+            " compares between clusters of requirements. There are two forms to compare multiple clusters. This is used in the cluster operations and is represented by the parameter \"type\". The first form consists in comparing only the more representative requirement of each cluster (type = false). The other way " +
+            " consists in comparing all the requirements of each cluster (type = true). Also, there are two ways to compare between two individual requirements. The default method consists in comparing the name of the requirements. The other way lies in comparing the name and the text of the requirements and return the maximum of the two. </p> " +
+            "<p>There are four different types of operations: </p>" +
             "<ul>" +
-            "<li>ReqReq: Compares two requirements</li>" +
-            "<li>ReqProj: Compares between a list of requirements and a set of requirements</li>" +
-            "<li>Proj: Compares all possible pairs of requirements from a set of requirements</li></ul>" +
-            "<p> Also there are two ways to compare requirements. The default method consists in comparing the name of the requirements. The other way lies in comparing the name and the text of the requirements and return the maximum of the two.</p>" +
-            "<p>The component needs to preprocess the requirements before doing any comparison. The operation AddReqs is responsible for that work. We use opennlp library in preprocessing requirements </p>" +
+            "<li>Clusters: Creates and updates a set of clusters of the different organizations. </li>" +
+            "<li>Projects: Returns the duplicate dependencies between different requirements using the knowledge saved in the database.</li>" +
+            "<li>ProjectsNew: Returns the duplicate dependencies between different requirements without using the knowledge saved in the database.</li>" +
+            "<li>Auxiliary: Auxiliary operations.</li></ul>" +
             "<p>All the operations in this service are asynchronous. It is necessary to write a server URL as parameter in all of them. The result of the operation will be returned to that url. All operations follow the same pattern:</p>" +
             "<ol><li>The client calls the operation with all necessary parameters</li>" +
             "<li>The service receives the request and checks the main conditions</li>" +

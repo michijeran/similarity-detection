@@ -9,21 +9,20 @@ The component is based in Semilar semantic similarity library. The aim of the AP
 Semilar reference:
 Rus, V., Lintean, M., Banjade, R., Niraula, N., and Stefanescu, D. (2013). SEMILAR: The Semantic Similarity Toolkit. Proceedings of the 51st Annual Meeting of the Association for Computational Linguistics, August 4-9, 2013, Sofia, Bulgaria.
 
+This service groups duplicates requirements inside clusters. Each organization has saved its own requirements grouped into clusters in an internal database. Also, each organization has a set of accepted and rejected dependencies saved in the database which are taken into account when calculating the similarity between the different requirements. Instead of comparing the requirements separately, this service compares between clusters of requirements. There are two forms to compare multiple clusters. This is used in the cluster operations and is represented by the parameter "type". The first form consists in comparing only the more representative requirement of each cluster (type = false). The other way consists in comparing all the requirements of each cluster (type = true). Also, there are two ways to compare between two individual requirements. The default method consists in comparing the name of the requirements. The other way lies in comparing the name and the text of the requirements and return the maximum of the two.
+
 ## Technical description
 
 Next sections provide a general overview of the technical details of the similarity detection service.
 
 ### Main functionalities
 
-There are three different types of operations:
+There are four different types of operations:
 
-	- ReqReq: Compares two requirements
-	- ReqProj: Compares between a list of requirements and a set of requirements
-	- Proj: Compares all possible pairs of requirements from a set of requirements
-
-Also there are two ways to compare requirements. The default method consists in comparing the name of the requirements. The other way lies in comparing the name and the text of the requirements and return the maximum of the two.
-
-The component needs to preprocess the requirements before doing any comparison. The operation AddReqs is responsible for that work. We use opennlp library in preprocessing requirements.
+    - Clusters: Creates and updates a set of clusters of the different organizations.
+    - Projects: Returns the duplicate dependencies between different requirements using the knowledge saved in the database.
+    - ProjectsNew: Returns the duplicate dependencies between different requirements without using the knowledge saved in the database.
+    - Auxiliary: Auxiliary operations.
 
 The API uses UTF-8 charset. Also, it uses the OpenReq format for input and output JSONs.
 
