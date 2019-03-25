@@ -97,16 +97,16 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id simReqProj(String stakeholderId, List<String> req, String project, String compare, float threshold, String url, JsonProject input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id reqProjectNew(List<String> reqs, String project, String compare, boolean type, float threshold, String url, ProjectNew input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
 
         if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
-        if (!input.OK()) throw new BadRequestException("The provided json has not requirements or has not projects");
+        if (input.getProjects().size() == 0 || input.getRequirements().size() == 0) throw new BadRequestException("The provided json has not requirements or has not projects");
 
         //search requirements to compare
-        List<Requirement> requirements_to_compare = search_requirements(req,input.getRequirements());
+        List<Requirement> requirements_to_compare = search_requirements(reqs,input.getRequirements());
         //search project to compare
         Project project_specified = search_project(project,input.getProjects());
         //search project requirements
@@ -123,7 +123,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.similarityReqProject(stakeholderId,compare,threshold,id.getId(),requirements_to_compare,project_requirements,input.getDependencies());
+                    componentAdapter.reqProjectNew(type,compare,threshold,id.getId(),requirements_to_compare,project_requirements);
                     fis = new FileInputStream(file);
                     success = "true";
                 } catch (ComponentException e) {
@@ -136,7 +136,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                     fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
                 }
                 finally {
-                    update_client(fis,url,id.getId(),success,"ReqProj");
+                    update_client(fis,url,id.getId(),success,"ReqProjectNew");
                     try {
                         delete_file(file);
                     } catch (InternalErrorException e) {
@@ -151,23 +151,23 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id simProj(String stakeholderId,String project, String compare, float threshold, String url, JsonProject input) throws BadRequestException, InternalErrorException, NotFoundException {
-
+    public Result_id projectsNew(List<String> projects, String compare, boolean type, float threshold, String url, ProjectNew input) throws BadRequestException, InternalErrorException, NotFoundException {
         String component = "Semilar";
         Result_id id = get_id();
 
         if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
-        if (!input.OK()) throw new BadRequestException("The provided json has not requirements or has not projects");
+        if (input.getProjects().size() == 0 || input.getRequirements().size() == 0) throw new BadRequestException("The provided json has not requirements or has not projects");
 
-        //search project to compare
-        Project project_specified = search_project(project,input.getProjects());
-        //search project requirements
-        List<Requirement> project_requirements = search_project_requirements(project_specified,input.getRequirements());
+        List<Requirement> project_requirements = new ArrayList<>();
+
+        for (String project_specified: projects) {
+            Project project = search_project(project_specified,input.getProjects());
+            project_requirements.addAll(search_project_requirements(project,input.getRequirements()));
+        }
 
         //Create file to save resulting dependencies
         File file = create_file(path+id.getId());
 
-        //New thread
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -175,8 +175,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.similarityProject(stakeholderId,compare,threshold,id.getId(),project_requirements,input.getDependencies());
-
+                    componentAdapter.projectsNew(type,compare,threshold,id.getId(),project_requirements);
                     fis = new FileInputStream(file);
                     success = "true";
                 } catch (ComponentException e) {
@@ -189,7 +188,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                     fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
                 }
                 finally {
-                    update_client(fis,url,id.getId(),success,"Proj");
+                    update_client(fis,url,id.getId(),success,"ProjectsNew");
                     try {
                         delete_file(file);
                     } catch (InternalErrorException e) {
@@ -203,40 +202,6 @@ public class SimilarityServiceImpl implements SimilarityService {
         return id;
     }
 
-    @Override
-    public Result_id addRequirements(String stakeholderId, Requirements input, String url) throws ComponentException, BadRequestException {
-
-        Result_id id = get_id();
-
-        if (!input.OK()) throw new BadRequestException("The provided json has not requirements");
-
-        //New thread
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                InputStream fis = null;
-                String success = "false";
-                try {
-                    SemilarAdapter semilarAdapter = new SemilarAdapter();
-                    semilarAdapter.processRequirements(stakeholderId,input.getRequirements());
-                    System.out.println("finish preprocess");
-                    String result = "{\"result\":\"Success!\"}";
-                    fis = new ByteArrayInputStream(result.getBytes());
-                    success = "true";
-                } catch (ComponentException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
-                } catch (BadRequestException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
-                }
-                finally {
-                    update_client(fis,url,id.getId(),success,"AddReqs");
-                }
-            }
-        });
-
-        thread.start();
-        return id;
-    }
 
     @Override
     public void clearDB() throws SemilarException, BadRequestException {
@@ -246,65 +211,11 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id simCluster(String project, String compare, float threshold, String url, String type, JsonProject input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id iniClusters(String stakeholderId, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
 
-        if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
-        if (!input.OK()) throw new BadRequestException("The provided json has not requirements or has not projects");
-
-        //search project to compare
-        Project project_specified = search_project(project,input.getProjects());
-        //search project requirements
-        List<Requirement> project_requirements = search_project_requirements(project_specified,input.getRequirements());
-
-        //Create file to save resulting dependencies
-        File file = create_file(path+id.getId());
-
-        //New thread
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                InputStream fis = null;
-                String success = "false";
-                try {
-                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.similarityCluster(type,compare,threshold,id.getId(),project_requirements,input.getDependencies());
-
-                    fis = new FileInputStream(file);
-                    success = "true";
-                } catch (ComponentException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
-                } catch (BadRequestException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
-                } catch (NotFoundException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(410,"Not found",e.getMessage()).getBytes());
-                } catch (FileNotFoundException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
-                }
-                finally {
-                    update_client(fis,url,id.getId(),success,"Clusters");
-                    try {
-                        delete_file(file);
-                    } catch (InternalErrorException e) {
-                        System.out.println(e.getMessage());
-                    }
-                }
-            }
-        });
-
-        thread.start();
-        return id;
-    }
-
-    @Override
-    public Result_id iniClusters(String stakeholderId, String compare, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException {
-
-        String component = "Semilar";
-        Result_id id = get_id();
-
-        if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
         if (input.getRequirements().size() == 0) throw new BadRequestException("The provided json has not requirements");
 
         //search requirements in dependencies
@@ -321,7 +232,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                 String success = "false";
                 try {
                     ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.iniClusters(compare,id.getId(),stakeholderId,input.getRequirements(),input.getDependencies());
+                    componentAdapter.iniClusters(id.getId(),stakeholderId,input.getRequirements(),input.getDependencies());
                     String result = "{\"result\":\"Success!\"}";
                     fis = new ByteArrayInputStream(result.getBytes());
                     success = "true";

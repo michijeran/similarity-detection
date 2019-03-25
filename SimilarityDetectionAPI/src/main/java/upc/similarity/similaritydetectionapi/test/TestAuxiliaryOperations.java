@@ -56,7 +56,7 @@ public class TestAuxiliaryOperations extends ControllerTest {
 
     @Test
     public void ModifyThreshold_recompute() throws InterruptedException {
-        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/ModifyThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
+        connect_to_component("http://localhost:"+port+"/upc/similarity-detection/SetThreshold?stakeholderId=Test&threshold=0.3&url=http://localhost:"+port+"/upc/similarity-detection/Test",null);
         while(!finished) {Thread.sleep(2000);}
         finished = false;
         connect_to_component("http://localhost:"+port+"/upc/similarity-detection/InitializeClusters?stakeholderId=Test&compare=true&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/modifyThreshold/recompute/input_auxiliary_modifyThreshold_recompute.json"));

@@ -1,0 +1,3 @@
+{"projects":[
+    {"id":"P1","specifiedRequirements":["QM-1","QM-2","QM-3"]},
+    {"id":"P2","specifiedRequirements":["QM-4","QM-5"]}]}

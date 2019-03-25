@@ -39,48 +39,31 @@ public class SemilarAdapter extends ComponentAdapter{
     }
 
     @Override
-    public void similarityReqProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Requirement> project_requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException {
+    public void reqProjectNew(boolean type, String compare, float threshold, String filename, List<Requirement> requirements_to_compare, List<Requirement> project_requirements) throws ComponentException, BadRequestException, NotFoundException {
 
-        JSONArray reqs_to_compare_json = list_requirements_to_JSON(requirements);
-        JSONArray reqs_json = list_requirements_to_JSON(project_requirements);
-        JSONArray deps_json = list_dependencies_to_JSON(dependencies);
-
-        JSONObject json_to_send = new JSONObject();
-        json_to_send.put("requirements",reqs_to_compare_json);
-        json_to_send.put("project_requirements",reqs_json);
-        json_to_send.put("dependencies",deps_json);
-
-        connection_component(URL + "ReqProjSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename + "&stakeholderid=" +stakeholderId,json_to_send);
-    }
-
-    @Override
-    public void similarityProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException {
-
-        JSONArray reqs_json = list_requirements_to_JSON(requirements);
-        JSONArray deps_json = list_dependencies_to_JSON(dependencies);
+        JSONArray reqs_to_compare_json = list_requirements_to_JSON(requirements_to_compare);
+        JSONArray project_reqs_json = list_requirements_to_JSON(project_requirements);
 
         JSONObject json_to_send = new JSONObject();
-        json_to_send.put("requirements",reqs_json);
-        json_to_send.put("dependencies",deps_json);
+        json_to_send.put("requirements_to_compare",reqs_to_compare_json);
+        json_to_send.put("project_requirements",project_reqs_json);
 
-        connection_component(URL + "ProjSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename + "&stakeholderid=" +stakeholderId,json_to_send);
+        connection_component(URL + "ReqProjectNew?compare=" + compare + "&threshold=" + threshold + "&filename=" + filename + "&type=" + type,json_to_send);
     }
 
-    @Override
-    public void similarityCluster(String type, String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException {
+    public void projectsNew(boolean type, String compare, float threshold, String filename, List<Requirement> project_requirements) throws ComponentException, BadRequestException, NotFoundException {
 
-        JSONArray reqs_json = list_requirements_to_JSON(requirements);
-        JSONArray deps_json = list_dependencies_to_JSON(dependencies);
+        JSONArray project_reqs_json = list_requirements_to_JSON(project_requirements);
 
         JSONObject json_to_send = new JSONObject();
-        json_to_send.put("requirements",reqs_json);
-        json_to_send.put("dependencies",deps_json);
+        json_to_send.put("requirements",project_reqs_json);
 
-        connection_component(URL + "ClusterSim?compare=" + compare + "&threshold=" + treshold + "&filename=" + filename + "&type=" + type,json_to_send);
+        connection_component(URL + "ProjectsNew?compare=" + compare + "&threshold=" + threshold + "&filename=" + filename + "&type=" + type,json_to_send);
     }
 
+
     @Override
-    public void iniClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException {
+    public void iniClusters(String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException {
 
         JSONArray reqs_json = list_requirements_to_JSON(requirements);
         JSONArray deps_json = list_dependencies_to_JSON(dependencies);
@@ -89,7 +72,7 @@ public class SemilarAdapter extends ComponentAdapter{
         json_to_send.put("requirements", reqs_json);
         json_to_send.put("dependencies", deps_json);
 
-        connection_component(URL + "iniClusters?compare=" + compare + "&filename=" + filename + "&stakeholderId=" + stakeholderId,json_to_send);
+        connection_component(URL + "iniClusters?filename=" + filename + "&stakeholderId=" + stakeholderId,json_to_send);
     }
 
     @Override

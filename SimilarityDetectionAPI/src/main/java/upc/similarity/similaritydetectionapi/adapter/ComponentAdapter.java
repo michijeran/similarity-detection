@@ -28,13 +28,11 @@ public abstract class ComponentAdapter {
     //main operations
     public abstract void similarity(String stakeholderId, String compare, Requirement req1, Requirement req2, String filename, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
-    public abstract void similarityReqProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Requirement> project_requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+    public abstract void reqProjectNew(boolean type, String compare, float threshold, String filename, List<Requirement> requirements_to_compare, List<Requirement> project_requirements) throws ComponentException, BadRequestException, NotFoundException;
 
-    public abstract void similarityProject(String stakeholderId, String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+    public abstract void projectsNew(boolean type, String compare, float threshold, String filename, List<Requirement> project_requirements) throws ComponentException, BadRequestException, NotFoundException;
 
-    public abstract void similarityCluster(String type, String compare, float treshold, String filename, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
-
-    public abstract void iniClusters(String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
+    public abstract void iniClusters(String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
     public abstract void updateClusters(boolean type, String compare, String filename, String stakeholderId, List<Requirement> requirements, List<Dependency> dependencies) throws ComponentException, BadRequestException, NotFoundException;
 
