@@ -103,6 +103,8 @@ public class SemilarServiceImpl implements SemilarService {
         List<Cluster> clusters = new ArrayList<>();
         Set<String> ids = new HashSet<>(); //avoid repeated clusters
 
+        List<Requirement> requirements = new ArrayList<>();
+
         for (Requirement requirement: input.getRequirements()) {
             if (!ids.contains(requirement.getId())) {
                 requirement.compute_sentence();
@@ -111,6 +113,7 @@ public class SemilarServiceImpl implements SemilarService {
                 cluster.addReq(requirement);
                 ++cluster_id;
                 clusters.add(cluster);
+                requirements.add(requirement);
             }
         }
 
@@ -122,6 +125,7 @@ public class SemilarServiceImpl implements SemilarService {
                 cluster.addReq(requirement);
                 ++cluster_id;
                 clusters.add(cluster);
+                requirements.add(requirement);
             }
         }
 
@@ -129,10 +133,8 @@ public class SemilarServiceImpl implements SemilarService {
 
         ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
 
-        input.getProject_requirements().addAll(input.getRequirements());
-
-        if (type) all_to_all_algorithm(input.getProject_requirements(),threshold,comparer,new ArrayList<>(),clusters,"");
-        else all_to_masters_algorithm(input.getProject_requirements(),threshold,comparer,new ArrayList<>(),clusters, "");
+        if (type) all_to_all_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters,"");
+        else all_to_masters_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters, "");
 
         Path p = Paths.get("../testing/output/"+filename);
         String s = System.lineSeparator() + "{\"dependencies\": [";
@@ -143,7 +145,7 @@ public class SemilarServiceImpl implements SemilarService {
         for (Requirement requirement1: input.getRequirements()) {
             Cluster cluster = requirement1.getCluster();
             for (Requirement requirement2: cluster.getSpecifiedRequirements()) {
-                if (!requirement1.getId().equals(requirement2.getId())) {
+                if (!input.getRequirements().contains(requirement2)) { //TODO improve efficiency
                     Dependency dependency = new Dependency(requirement1.getId(), requirement2.getId(), "proposed", "duplicates");
                     s = System.lineSeparator() + dependency.print_json();
                     if (!firstComa) s = "," + s;
@@ -165,6 +167,8 @@ public class SemilarServiceImpl implements SemilarService {
         List<Cluster> clusters = new ArrayList<>();
         Set<String> ids = new HashSet<>(); //avoid repeated clusters
 
+        List<Requirement> requirements = new ArrayList<>();
+
         for (Requirement requirement: input.getRequirements()) {
             if (!ids.contains(requirement.getId())) {
                 requirement.compute_sentence();
@@ -173,6 +177,7 @@ public class SemilarServiceImpl implements SemilarService {
                 cluster.addReq(requirement);
                 ++cluster_id;
                 clusters.add(cluster);
+                requirements.add(requirement);
             }
         }
 
@@ -180,8 +185,8 @@ public class SemilarServiceImpl implements SemilarService {
 
         ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
 
-        if (type) all_to_all_algorithm(input.getRequirements(),threshold,comparer,new ArrayList<>(),clusters,"");
-        else all_to_masters_algorithm(input.getRequirements(),threshold,comparer,new ArrayList<>(),clusters, "");
+        if (type) all_to_all_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters,"");
+        else all_to_masters_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters, "");
 
         Path p = Paths.get("../testing/output/"+filename);
         String s = System.lineSeparator() + "{\"dependencies\": [";
@@ -540,6 +545,7 @@ public class SemilarServiceImpl implements SemilarService {
                         if (req1.getCluster() != req2.getCluster()) {
                             String old_master_req1 = req1.getCluster().getReq_older().getId();
                             String old_master_req2 = req2.getCluster().getReq_older().getId();
+                            Cluster aux_cluster = req2.getCluster();
                             merge_clusters(req1.getCluster(), req2.getCluster());
                             String new_master = req1.getCluster().getReq_older().getId();
                             if (!stakeholderid.equals("")) {
@@ -548,7 +554,7 @@ public class SemilarServiceImpl implements SemilarService {
                                 if (!old_master_req2.equals(new_master))
                                     result.add(new Dependency(new_master, old_master_req2, "proposed", "duplicates"));
                             }
-                            clusters_listed.remove(req2.getCluster());
+                            clusters_listed.remove(aux_cluster);
                         }
                     }
                 }

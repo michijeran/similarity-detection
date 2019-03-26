@@ -128,8 +128,7 @@ public class RestApiController {
     @RequestMapping(value = "/ResetOrganization", method = RequestMethod.POST)
     @ApiOperation(value = "ResetOrganization", notes = "Deletes from the database all the information related to the organization received as parameter: clusters, pre-processed requirements and dependencies.", tags = "Auxiliary")
     public ResponseEntity<?> ResetOrganization(@ApiParam(value="Organization", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
-                                               @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
-                                               @ApiParam(value="OpenreqJson with the updated data", required = true) @RequestBody JsonCluster json) {
+                                               @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
         try {
             url_ok(url);
@@ -195,7 +194,7 @@ public class RestApiController {
             @ApiResponse(code=410, message = "Not Found"),
             @ApiResponse(code=411, message = "Bad request"),
             @ApiResponse(code=510, message = "Internal Error")})
-    public ResponseEntity<?> reqProjectNew(@ApiParam(value="Id of the requirements to compare", required = true, example = "SQ-132") @RequestParam("req") List<String> req,
+    public ResponseEntity<?> reqProjectNew(@ApiParam(value="Id of the requirements to compare", required = true, example = "SQ-132") @RequestParam("requirement") List<String> req,
                                            @ApiParam(value="Id of the project to compare", required = true, example = "SM") @RequestParam("project") String project,
                                            @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam(value = "compare", required = false) String compare,
                                            @ApiParam(value="Algorithm type", required = false, example = "all/one") @RequestParam(value = "type", required = false) boolean type,

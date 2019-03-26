@@ -1,0 +1,10 @@
+{"requirements":[
+    {"id":"QM-1","name":"Are you testing this really?","created_at":4},
+    {"id":"QM-2","name":"The boat is just there.","created_at":0},
+    {"id":"QM-3","name":"Are you testing this really?","created_at":2},
+    {"id":"QM-4","name":"The boat is just there.","created_at":2},
+    {"id":"QM-5","name":"Are you testing this really?","created_at":1},
+    {"id":"QM-6","name":"Are you testing this really?","created_at":2}],
+"projects":[
+    {"id":"P1","specifiedRequirements":["QM-1","QM-2","QM-3"]},
+    {"id":"P2","specifiedRequirements":["QM-1","QM-4","QM-5"]}]}

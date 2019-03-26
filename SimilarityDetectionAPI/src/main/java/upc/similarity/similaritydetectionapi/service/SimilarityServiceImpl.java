@@ -381,7 +381,7 @@ public class SimilarityServiceImpl implements SimilarityService {
                     fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
                 }
                 finally {
-                    update_client(fis,url,id.getId(),success,"modifyThreshold");
+                    update_client(fis,url,id.getId(),success,"ModifyThreshold");
                     try {
                         delete_file(file);
                     } catch (InternalErrorException e) {
