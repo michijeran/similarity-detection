@@ -96,123 +96,6 @@ public class SemilarServiceImpl implements SemilarService {
     }
 
     @Override
-    public void reqProjectNew(boolean type, String compare, float threshold, String filename, ReqProjNewOp input) throws InternalErrorException {
-
-        long cluster_id = 0;
-
-        List<Cluster> clusters = new ArrayList<>();
-        Set<String> ids = new HashSet<>(); //avoid repeated clusters
-
-        List<Requirement> requirements = new ArrayList<>();
-
-        for (Requirement requirement: input.getRequirements()) {
-            if (!ids.contains(requirement.getId())) {
-                requirement.compute_sentence();
-                ids.add(requirement.getId());
-                Cluster cluster = new Cluster(cluster_id);
-                cluster.addReq(requirement);
-                ++cluster_id;
-                clusters.add(cluster);
-                requirements.add(requirement);
-            }
-        }
-
-        for (Requirement requirement: input.getProject_requirements()) {
-            if (!ids.contains(requirement.getId())) {
-                requirement.compute_sentence();
-                ids.add(requirement.getId());
-                Cluster cluster = new Cluster(cluster_id);
-                cluster.addReq(requirement);
-                ++cluster_id;
-                clusters.add(cluster);
-                requirements.add(requirement);
-            }
-        }
-
-        ids = null;
-
-        ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
-
-        if (type) all_to_all_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters,"");
-        else all_to_masters_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters, "");
-
-        Path p = Paths.get("../testing/output/"+filename);
-        String s = System.lineSeparator() + "{\"dependencies\": [";
-
-        write_to_file(s,p);
-
-        boolean firstComa = true;
-        for (Requirement requirement1: input.getRequirements()) {
-            Cluster cluster = requirement1.getCluster();
-            for (Requirement requirement2: cluster.getSpecifiedRequirements()) {
-                if (!input.getRequirements().contains(requirement2)) { //TODO improve efficiency
-                    Dependency dependency = new Dependency(requirement1.getId(), requirement2.getId(), "proposed", "duplicates");
-                    s = System.lineSeparator() + dependency.print_json();
-                    if (!firstComa) s = "," + s;
-                    firstComa = false;
-                    write_to_file(s, p);
-                }
-            }
-        }
-
-        s = System.lineSeparator() + "]}";
-        write_to_file(s,p);
-    }
-
-    @Override
-    public void projectsNew(boolean type, String compare, float threshold, String filename, Requirements input) throws InternalErrorException {
-
-        long cluster_id = 0;
-
-        List<Cluster> clusters = new ArrayList<>();
-        Set<String> ids = new HashSet<>(); //avoid repeated clusters
-
-        List<Requirement> requirements = new ArrayList<>();
-
-        for (Requirement requirement: input.getRequirements()) {
-            if (!ids.contains(requirement.getId())) {
-                requirement.compute_sentence();
-                ids.add(requirement.getId());
-                Cluster cluster = new Cluster(cluster_id);
-                cluster.addReq(requirement);
-                ++cluster_id;
-                clusters.add(cluster);
-                requirements.add(requirement);
-            }
-        }
-
-        ids = null;
-
-        ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
-
-        if (type) all_to_all_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters,"");
-        else all_to_masters_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters, "");
-
-        Path p = Paths.get("../testing/output/"+filename);
-        String s = System.lineSeparator() + "{\"dependencies\": [";
-
-        write_to_file(s,p);
-
-        boolean firstComa = true;
-        for (Cluster cluster: clusters) {
-            Requirement master = cluster.getReq_older();
-            for (Requirement requirement: cluster.getSpecifiedRequirements()) {
-                if (!master.getId().equals(requirement.getId())) {
-                    Dependency dependency = new Dependency(master.getId(),requirement.getId(),"proposed", "duplicates");
-                    s = System.lineSeparator() + dependency.print_json();
-                    if (!firstComa) s = "," + s;
-                    firstComa = false;
-                    write_to_file(s, p);
-                }
-            }
-        }
-
-        s = System.lineSeparator() + "]}";
-        write_to_file(s,p);
-
-    }
-
-    @Override
     public void modifyThreshold(boolean type, String filename, String compare, String stakeholderId, float threshold) throws InternalErrorException, BadRequestException {
 
         boolean new_stakeholder = true;
@@ -867,10 +750,19 @@ public class SemilarServiceImpl implements SemilarService {
         write_to_file(s,p);
         boolean firstComa = true;
 
-        List<Requirement> loaded_requirements = new ArrayList<>();
+        List<Cluster> listed_clusters = new ArrayList<>();
+        HashMap<Long,Cluster> clusters = new HashMap<>();
         for (String requirementId: input.getRequirements()) {
             try {
-                loaded_requirements.add(requirementDAO.getRequirement(requirementId, stakeholderId)); //TODO only load the id and the clusterid
+                Requirement requirement = requirementDAO.getRequirement(requirementId, stakeholderId);
+                if (clusters.containsKey(requirement.getClusterId())) {
+                    clusters.get(requirement.getClusterId()).addReq(requirement);
+                } else {
+                    Cluster aux = new Cluster(requirement.getClusterId());
+                    aux.addReq(requirement);
+                    clusters.put(requirement.getClusterId(),aux);
+                    listed_clusters.add(aux);
+                }
             } catch (SQLException e) {
                 if (e.getMessage().contains("does not exist in the database")) throw new BadRequestException("Database error: " + e.getMessage());
                 throw new InternalErrorException("Database error: Error while loading a requirement.");
@@ -879,21 +771,24 @@ public class SemilarServiceImpl implements SemilarService {
             }
         }
 
-        for (int i = 0; i < loaded_requirements.size(); ++i) {
-            Requirement requirement1 = loaded_requirements.get(i);
-            for (int j = i + 1; j < loaded_requirements.size(); ++j) {
-                Requirement requirement2 = loaded_requirements.get(j);
-                if (requirement1.getClusterId() == requirement2.getClusterId()) {
+        clusters = null;
+
+        for (int i = 0; i < listed_clusters.size(); ++i) {
+            Cluster cluster = listed_clusters.get(i);
+            Requirement master = cluster.getReq_older();
+            for (int j = 0; j < cluster.getSpecifiedRequirements().size(); ++j) {
+                Requirement requirement = cluster.getSpecifiedRequirements().get(j);
+                if (!master.getId().equals(requirement.getId())) {
                     Dependency aux_db = null;
                     try {
-                        aux_db = requirementDAO.getDependency(requirement1.getId(),requirement2.getId(),stakeholderId);
+                        aux_db = requirementDAO.getDependency(master.getId(),requirement.getId(),stakeholderId);
                     } catch (SQLException e) {
                         if (!e.getMessage().contains("The dependency does not exist in the database")) throw new InternalErrorException("Database error: Error while loading a dependency.");
                     } catch (ClassNotFoundException e) {
                         throw new InternalErrorException("Database error: Class not found.");
                     }
                     if (aux_db == null) {
-                        Dependency dependency = new Dependency(requirement1.getId(),requirement2.getId(), "proposed", "duplicates");
+                        Dependency dependency = new Dependency(master.getId(),requirement.getId(), "proposed", "duplicates");
                         String aux = System.lineSeparator() + dependency.print_json();
                         if (!firstComa) aux = "," + aux;
                         firstComa = false;
@@ -907,6 +802,123 @@ public class SemilarServiceImpl implements SemilarService {
         write_to_file(s,p);
     }
 
+
+    @Override
+    public void reqProjectNew(boolean type, String compare, float threshold, String filename, ReqProjNewOp input) throws InternalErrorException {
+
+        long cluster_id = 0;
+
+        List<Cluster> clusters = new ArrayList<>();
+        Set<String> ids = new HashSet<>(); //avoid repeated clusters
+
+        List<Requirement> requirements = new ArrayList<>();
+
+        for (Requirement requirement: input.getRequirements()) {
+            if (!ids.contains(requirement.getId())) {
+                requirement.compute_sentence();
+                ids.add(requirement.getId());
+                Cluster cluster = new Cluster(cluster_id);
+                cluster.addReq(requirement);
+                ++cluster_id;
+                clusters.add(cluster);
+                requirements.add(requirement);
+            }
+        }
+
+        for (Requirement requirement: input.getProject_requirements()) {
+            if (!ids.contains(requirement.getId())) {
+                requirement.compute_sentence();
+                ids.add(requirement.getId());
+                Cluster cluster = new Cluster(cluster_id);
+                cluster.addReq(requirement);
+                ++cluster_id;
+                clusters.add(cluster);
+                requirements.add(requirement);
+            }
+        }
+
+        ids = null;
+
+        ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
+
+        if (type) all_to_all_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters,"");
+        else all_to_masters_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters, "");
+
+        Path p = Paths.get("../testing/output/"+filename);
+        String s = System.lineSeparator() + "{\"dependencies\": [";
+
+        write_to_file(s,p);
+
+        boolean firstComa = true;
+        for (Requirement requirement1: input.getRequirements()) {
+            Cluster cluster = requirement1.getCluster();
+            for (Requirement requirement2: cluster.getSpecifiedRequirements()) {
+                if (!input.getRequirements().contains(requirement2)) { //TODO improve efficiency
+                    Dependency dependency = new Dependency(requirement1.getId(), requirement2.getId(), "proposed", "duplicates");
+                    s = System.lineSeparator() + dependency.print_json();
+                    if (!firstComa) s = "," + s;
+                    firstComa = false;
+                    write_to_file(s, p);
+                }
+            }
+        }
+
+        s = System.lineSeparator() + "]}";
+        write_to_file(s,p);
+    }
+
+    @Override
+    public void projectsNew(boolean type, String compare, float threshold, String filename, Requirements input) throws InternalErrorException {
+
+        long cluster_id = 0;
+
+        List<Cluster> clusters = new ArrayList<>();
+        Set<String> ids = new HashSet<>(); //avoid repeated clusters
+
+        List<Requirement> requirements = new ArrayList<>();
+
+        for (Requirement requirement: input.getRequirements()) {
+            if (!ids.contains(requirement.getId())) {
+                requirement.compute_sentence();
+                ids.add(requirement.getId());
+                Cluster cluster = new Cluster(cluster_id);
+                cluster.addReq(requirement);
+                ++cluster_id;
+                clusters.add(cluster);
+                requirements.add(requirement);
+            }
+        }
+
+        ids = null;
+
+        ComparisonBetweenSentences comparer = new ComparisonBetweenSentences(greedyComparerWNLin,compare,threshold,true,component);
+
+        if (type) all_to_all_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters,"");
+        else all_to_masters_algorithm(requirements,threshold,comparer,new ArrayList<>(),clusters, "");
+
+        Path p = Paths.get("../testing/output/"+filename);
+        String s = System.lineSeparator() + "{\"dependencies\": [";
+
+        write_to_file(s,p);
+
+        boolean firstComa = true;
+        for (Cluster cluster: clusters) {
+            Requirement master = cluster.getReq_older();
+            for (Requirement requirement: cluster.getSpecifiedRequirements()) {
+                if (!master.getId().equals(requirement.getId())) {
+                    Dependency dependency = new Dependency(master.getId(),requirement.getId(),"proposed", "duplicates");
+                    s = System.lineSeparator() + dependency.print_json();
+                    if (!firstComa) s = "," + s;
+                    firstComa = false;
+                    write_to_file(s, p);
+                }
+            }
+        }
+
+        s = System.lineSeparator() + "]}";
+        write_to_file(s,p);
+
+    }
 
     //Database
     @Override
