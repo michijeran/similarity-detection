@@ -1,6 +1,5 @@
 package upc.similarity.similaritydetectionapi.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -31,73 +30,9 @@ public class SimilarityServiceImpl implements SimilarityService {
 
     private static String path = "../testing/output/";
 
-    //TODO remove repeated code
-
-
-    //Main operations
 
     @Override
-    public Result_id simReqReq(String stakeholderId, String req1, String req2, String compare, String url, JsonReqReq input) throws BadRequestException, InternalErrorException, NotFoundException {
-
-        String component = "Semilar";
-        Result_id id = get_id();
-
-        if (!validCompare(compare)) throw new BadRequestException("The provided attribute to compare is not valid. Please use: \'true\' or \'false\'."); // Error no valid compare attribute
-
-        if (!input.OK()) throw new BadRequestException("The provided json has not requirements");
-
-        //Searching requirements with ids req1 and req2
-        List<String> requirements_ids = new ArrayList<>();
-
-        requirements_ids.add(req1);
-        requirements_ids.add(req2);
-
-        List<Requirement> requirements = search_requirements(requirements_ids,input.getRequirements());
-
-        Requirement requirement1 = requirements.get(0);
-        Requirement requirement2 = requirements.get(1);
-
-        //Create file to save resulting dependencies
-        File file = create_file(path+id.getId());
-
-        //New thread
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                InputStream fis = null;
-                String success = "false";
-                ObjectMapper mapper = new ObjectMapper();
-                try {
-                    ComponentAdapter componentAdapter = AdaptersController.getInstance().getAdpapter(Component.valueOf(component));
-                    componentAdapter.similarity(stakeholderId,compare, requirement1, requirement2,id.getId(),input.getDependencies());
-                    fis = new FileInputStream(file);
-                    success = "true";
-                } catch (ComponentException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(511,"Component error",e.getMessage()).getBytes());
-                } catch (BadRequestException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(411,"Bad request",e.getMessage()).getBytes());
-                } catch (NotFoundException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(410,"Not found",e.getMessage()).getBytes());
-                } catch (FileNotFoundException e) {
-                    fis = new ByteArrayInputStream(exception_to_JSON(510,"Internal error",e.getMessage()).getBytes());
-                }
-                finally {
-                    update_client(fis,url,id.getId(),success,"ReqReq");
-                    try {
-                        delete_file(file);
-                    } catch (InternalErrorException e) {
-                        System.out.println(e.getMessage());
-                    }
-                }
-            }
-        });
-
-        thread.start();
-        return id;
-    }
-
-    @Override
-    public Result_id reqProjectNew(List<String> reqs, String project, String compare, boolean type, float threshold, String url, ProjectNew input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id reqProjectNew(List<String> reqs, String project, String compare, boolean type, float threshold, String url, InputProjectsNewOp input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -151,7 +86,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id projectsNew(List<String> projects, String compare, boolean type, float threshold, String url, ProjectNew input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id projectsNew(List<String> projects, String compare, boolean type, float threshold, String url, InputProjectsNewOp input) throws BadRequestException, InternalErrorException, NotFoundException {
         String component = "Semilar";
         Result_id id = get_id();
 
@@ -211,7 +146,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id iniClusters(String stakeholderId, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id iniClusters(String stakeholderId, String url, InputClusterOp input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -305,7 +240,7 @@ public class SimilarityServiceImpl implements SimilarityService {
     }
 
     @Override
-    public Result_id updateClusters(boolean type, String stakeholderId, String compare, String url, JsonCluster input) throws BadRequestException, InternalErrorException, NotFoundException {
+    public Result_id updateClusters(boolean type, String stakeholderId, String compare, String url, InputClusterOp input) throws BadRequestException, InternalErrorException, NotFoundException {
 
         String component = "Semilar";
         Result_id id = get_id();
@@ -435,7 +370,7 @@ public class SimilarityServiceImpl implements SimilarityService {
         return id;
     }
 
-    public Result_id projects(String stakeholderId, List<String> projects, String url, Projects input) throws InternalErrorException, BadRequestException, NotFoundException {
+    public Result_id projects(String stakeholderId, List<String> projects, String url, InputProjectsOp input) throws InternalErrorException, BadRequestException, NotFoundException {
 
         if (input.getProjects().size() == 0) throw new BadRequestException("The provided json has no projects");
 
@@ -486,7 +421,7 @@ public class SimilarityServiceImpl implements SimilarityService {
 
     }
 
-    public Result_id reqProject(String stakeholderId, String project_id, String requirement_id, String url, Projects input) throws InternalErrorException, BadRequestException, NotFoundException {
+    public Result_id reqProject(String stakeholderId, String project_id, String requirement_id, String url, InputProjectsOp input) throws InternalErrorException, BadRequestException, NotFoundException {
 
         if (input.getProjects().size() == 0) throw new BadRequestException("The provided json has no projects");
 

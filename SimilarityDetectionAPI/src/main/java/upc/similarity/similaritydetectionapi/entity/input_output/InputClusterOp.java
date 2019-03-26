@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiModel(value = "JsonCluster", description = "OpenReqJson with requirements and accepted duplicates dependencies")
-public class JsonCluster implements Serializable {
+@ApiModel(value = "InputClusterOp", description = "OpenReqJson with requirements and accepted duplicates dependencies")
+public class InputClusterOp implements Serializable {
 
     @JsonProperty(value="requirements")
     private List<Requirement> requirements;
@@ -20,7 +20,7 @@ public class JsonCluster implements Serializable {
     @JsonProperty(value="dependencies")
     private List<Dependency> dependencies;
 
-    public JsonCluster() {
+    public InputClusterOp() {
         requirements = new ArrayList<>();
         dependencies = new ArrayList<>();
     }

@@ -8,13 +8,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiModel(value = "Projects", description = "OpenReqJson with projects")
-public class Projects implements Serializable {
+@ApiModel(value = "InputProjectsOp", description = "OpenReqJson with projects")
+public class InputProjectsOp implements Serializable {
 
     @JsonProperty(value="projects")
     private List<Project> projects;
 
-    public Projects() {
+    public InputProjectsOp() {
         this.projects = new ArrayList<>();
     }
 

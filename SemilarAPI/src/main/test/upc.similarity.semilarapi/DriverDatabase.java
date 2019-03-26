@@ -21,17 +21,18 @@ public class DriverDatabase {
     public static void main(String[] args) {
         try {
             SQLiteDAO db = new SQLiteDAO();
-            String filename = "/home/ferran/Documents/trabajo/DOCS_Qt/results_cluster/new_version/2ntry/masters/requirements.json";
+            String filename = "";
             Path p = Paths.get(filename);
             //db.createDatabase();
-            SemilarService ss = new SemilarServiceImpl();
+            /*SemilarService ss = new SemilarServiceImpl();
             //System.out.println(ss.getStakeholders());
             //System.out.println(ss.getRequirements("Test"));
             //System.out.println(ss.getDependencies("Test"));
 
             List<Requirement> requirements = db.getRequirements("UPC");
             for (Requirement requirement: requirements) {
-                write_to_file(requirement.toJSON().toString() + System.lineSeparator(),p);
+                //write_to_file(requirement.toJSON().toString() + System.lineSeparator(),p);
+                System.out.println(requirement.getText());
             }
 
             /*JSONObject json = new JSONObject(db.getRequirements_JSON("UPC"));
@@ -39,6 +40,7 @@ public class DriverDatabase {
             for (int i = 0; i < clusters.length(); ++i) {
                 JSONObject aux = clusters.getJSONObject(i);
                 write_to_file(aux.toString() + System.lineSeparator(),p);
+                System.out.println(aux.toString() + System.lineSeparator());
             }*/
         } catch (Exception e) {
             e.printStackTrace();

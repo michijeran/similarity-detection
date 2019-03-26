@@ -58,7 +58,7 @@ public class RestApiController {
     @ApiOperation(value = "InitializeClusters", notes = "Pre-process the requirements to be used by the similarity algorithm and creates a first set of clusters containing the tacit knowledge of the organization (i.e., accepted and rejected duplicates)",tags = "Clusters")
     public ResponseEntity<?> InitializeClusters(@ApiParam(value="Organization", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
                                       @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
-                                      @ApiParam(value="OpenreqJson with the initial dependencies and requirements", required = true) @RequestBody JsonCluster json) {
+                                      @ApiParam(value="OpenreqJson with the initial dependencies and requirements", required = true) @RequestBody InputClusterOp json) {
 
         try {
             url_ok(url);
@@ -108,7 +108,7 @@ public class RestApiController {
                                                 @ApiParam(value="Use text attribute in comparison?", required = false, example = "false") @RequestParam(value = "compare", required = false) String compare,
                                                 @ApiParam(value="Algorithm type", required = true, example = "true") @RequestParam("type") boolean type,
                                                 @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
-                                                @ApiParam(value="OpenreqJson with the updated data", required = true) @RequestBody JsonCluster json) {
+                                                @ApiParam(value="OpenreqJson with the updated data", required = true) @RequestBody InputClusterOp json) {
 
         try {
             url_ok(url);
@@ -144,11 +144,11 @@ public class RestApiController {
     }
 
     @CrossOrigin
-    @RequestMapping(value = "/Projects", method = RequestMethod.POST)
-    @ApiOperation(value = "Projects", notes = "Returns the already computed duplicates inside the requirements of an specific project.", tags = "Projects")
+    @RequestMapping(value = "/InputProjectsOp", method = RequestMethod.POST)
+    @ApiOperation(value = "InputProjectsOp", notes = "Returns the already computed duplicates inside the requirements of an specific project.", tags = "InputProjectsOp")
     public ResponseEntity<?> Projects(@ApiParam(value="Organization", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
                                       @ApiParam(value="Ids of the projects", required = true, example = "UPC") @RequestParam("projects") List<String> projects,
-                                      @ApiParam(value="OpenreqJson with the projects and their requirements", required = true) @RequestBody Projects json,
+                                      @ApiParam(value="OpenreqJson with the projects and their requirements", required = true) @RequestBody InputProjectsOp json,
                                       @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
         try {
@@ -166,11 +166,11 @@ public class RestApiController {
 
     @CrossOrigin
     @RequestMapping(value = "/ReqProject", method = RequestMethod.POST)
-    @ApiOperation(value = "ReqProject", notes = "Returns the already computed duplicates of the specified requirement with the requirements of an specific project.", tags = "Projects")
+    @ApiOperation(value = "ReqProject", notes = "Returns the already computed duplicates of the specified requirement with the requirements of an specific project.", tags = "InputProjectsOp")
     public ResponseEntity<?> ReqProject(@ApiParam(value="Organization", required = true, example = "UPC") @RequestParam("stakeholderId") String stakeholderId,
                                       @ApiParam(value="Id of the project", required = true, example = "UPC") @RequestParam("project") String project,
                                       @ApiParam(value="Id of the requirement", required = true, example = "UPC") @RequestParam("requirement") String requirement,
-                                      @ApiParam(value="OpenreqJson with the project and their requirements", required = true) @RequestBody Projects json,
+                                      @ApiParam(value="OpenreqJson with the project and their requirements", required = true) @RequestBody InputProjectsOp json,
                                       @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url) {
 
         try {
@@ -200,7 +200,7 @@ public class RestApiController {
                                            @ApiParam(value="Algorithm type", required = false, example = "all/one") @RequestParam(value = "type", required = false) boolean type,
                                            @ApiParam(value="Float between 0 and 1 that establishes the minimum similarity score that the added dependencies should have", required = true, example = "0.3") @RequestParam("threshold") Float threshold,
                                            @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
-                                           @ApiParam(value="OpenReqJson with requirements and projects", required = true) @RequestBody ProjectNew json) {
+                                           @ApiParam(value="OpenReqJson with requirements and projects", required = true) @RequestBody InputProjectsNewOp json) {
         try {
             url_ok(url);
             if (compare == null) compare = "false";
@@ -226,7 +226,7 @@ public class RestApiController {
                                            @ApiParam(value="Algorithm type", required = false, example = "all/one") @RequestParam(value = "type", required = false) boolean type,
                                            @ApiParam(value="Float between 0 and 1 that establishes the minimum similarity score that the added dependencies should have", required = true, example = "0.3") @RequestParam("threshold") float threshold,
                                            @ApiParam(value="The url where the result of the operation will be returned", required = true, example = "http://localhost:9406/upload/Test") @RequestParam("url") String url,
-                                           @ApiParam(value="OpenReqJson with requirements and projects", required = true) @RequestBody ProjectNew json) {
+                                           @ApiParam(value="OpenReqJson with requirements and projects", required = true) @RequestBody InputProjectsNewOp json) {
         try {
             url_ok(url);
             if (compare == null) compare = "false";

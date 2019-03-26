@@ -64,7 +64,7 @@ public class TestProjects extends ControllerTest {
     }
 
     /*
-    Projects operation
+    InputProjectsOp operation
      */
 
     @Test
@@ -79,7 +79,7 @@ public class TestProjects extends ControllerTest {
         while(!finished) {Thread.sleep(2000);}
         finished = false;
 
-        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/Projects?projects=P1&projects=P2&stakeholderId=Test&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/projects/input2_projects_projects.json"));
+        First_Result first_result = connect_to_component("http://localhost:"+port+"/upc/similarity-detection/InputProjectsOp?projects=P1&projects=P2&stakeholderId=Test&url=http://localhost:"+port+"/upc/similarity-detection/Test",read_file(path+"/projects/input2_projects_projects.json"));
         assertEquals(200,first_result.httpStatus);
         while(!finished) {Thread.sleep(2000);}
         assertEquals(read_file(path+"/projects/output_projects_projects.json"),second_result.result);
